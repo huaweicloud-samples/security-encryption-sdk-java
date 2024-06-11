@@ -131,7 +131,7 @@ public class CacheCryptoMeterialManager implements CryptoMeterialManager {
                 Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
                 digest = MessageDigest.getInstance(CACHE_ID_ALGORITHM_SM3, BouncyCastleProvider.PROVIDER_NAME);
             } else {
-                digest = MessageDigest.getInstance(CACHE_ID_ALGORITHM_SHA);
+                digest = MessageDigest.getInstance(CACHE_ID_ALGORITHM_SHA, BouncyCastleProvider.PROVIDER_NAME);
             }
             digestAlgorithm(dataKeyMaterials.getCryptoAlgorithm(), digest);
             byte[] bytes = Utils.serializeContext(dataKeyMaterials.getEncryptionContexts());
@@ -226,7 +226,7 @@ public class CacheCryptoMeterialManager implements CryptoMeterialManager {
                 Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
                 messageDigest = MessageDigest.getInstance(CACHE_ID_ALGORITHM_SM3, BouncyCastleProvider.PROVIDER_NAME);
             } else {
-                messageDigest = MessageDigest.getInstance(CACHE_ID_ALGORITHM_SHA);
+                messageDigest = MessageDigest.getInstance(CACHE_ID_ALGORITHM_SHA, BouncyCastleProvider.PROVIDER_NAME);
             }
             digestAlgorithm(algorithm, messageDigest);
             byte[] bytesContext = Utils.serializeContext(encryptionContext);
