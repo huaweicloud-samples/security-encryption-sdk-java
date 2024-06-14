@@ -6,6 +6,8 @@ import com.huaweicloud.encryptionsdk.exception.ErrorMessage;
 import com.huaweicloud.encryptionsdk.keyrings.kmskeyring.KMSKeyring;
 import com.huaweicloud.encryptionsdk.model.CiphertextDataKey;
 import com.huaweicloud.encryptionsdk.model.DataKeyMaterials;
+
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +38,7 @@ public class RawRSAKeyring extends RawKeyring {
         try {
             byte[] encodeDatakey = dataKeyMaterials.getPlaintextDataKey().getEncoded();
             RSAPublicKey publicKey = (RSAPublicKey) Utils.getPublicKey(bytes, RSA_ALGORITHM);
-            Cipher cipher = Cipher.getInstance(DEFAULT_CIPHER_ALGORITHM);
+            Cipher cipher = Cipher.getInstance(DEFAULT_CIPHER_ALGORITHM, BouncyCastleProvider.PROVIDER_NAME);
             cipher.init(Cipher.ENCRYPT_MODE, publicKey);
             ciphertextDataKeys.add(new CiphertextDataKey(cipher.doFinal(encodeDatakey)));
         } catch (Exception e) {
@@ -48,7 +50,7 @@ public class RawRSAKeyring extends RawKeyring {
     public boolean realDecrypt(byte[] bytes, CiphertextDataKey ciphertextDataKey, DataKeyMaterials dataKeyMaterials) {
         try {
             PrivateKey privateKey = Utils.getPrivateKey(bytes, RSA_ALGORITHM);
-            Cipher cipher = Cipher.getInstance(DEFAULT_CIPHER_ALGORITHM);
+            Cipher cipher = Cipher.getInstance(DEFAULT_CIPHER_ALGORITHM, BouncyCastleProvider.PROVIDER_NAME);
             cipher.init(Cipher.DECRYPT_MODE, privateKey);
             byte[] dataKey = cipher.doFinal(ciphertextDataKey.getDataKey());
             dataKeyMaterials.setPlaintextDataKey(

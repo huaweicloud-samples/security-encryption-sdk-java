@@ -78,7 +78,7 @@ public class CipherHandler {
         try {
             byte[] algorithmIv = getIv(algorithm);
             this.iv = algorithmIv;
-            this.cipher = Cipher.getInstance(algorithm.getCryptoAlg());
+            this.cipher = Cipher.getInstance(algorithm.getCryptoAlg(), BouncyCastleProvider.PROVIDER_NAME);
         } catch (Exception e) {
             throw new CipherDataException(e);
         }
