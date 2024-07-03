@@ -37,7 +37,6 @@ Encryption SDK 具备 DEK 缓存管理功能，将 DEK 缓存在本地，用户�
 Encryption SDK 支持同时使用多个主密钥进行数据加解密，数据加解密可指定多个 KMS 主密钥（建议指定不同region的 KMS），任意 KMS 均可解密 DEK 从而对数据进行解密，从而保证数据跨地域可用和灾备能力。
 
 
-
 ## 加密SDK接入指南
 
 ### 一、SDK获取和安装
