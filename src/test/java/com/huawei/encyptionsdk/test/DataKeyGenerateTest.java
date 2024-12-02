@@ -21,9 +21,16 @@ import java.util.Collections;
  * @datetime 2022年 09月 19日 14:14
  */
 public class DataKeyGenerateTest {
-    private static final String ACCESS_KEY = "WN0ETTDULCBZDCPDMBR8";
+    /**
+     * 基础认证信息：
+     * 认证用的ak和sk直接写到代码中有很大的安全风险，建议在配置文件或者环境变量中密文存放，使用时解密，确保安全；
+     * 本示例以ak和sk保存在环境变量中来实现身份验证为例，运行本示例前请先在本地环境中设置环境变量HUAWEICLOUD_SDK_AK和HUAWEICLOUD_SDK_SK。
+     * - ACCESS_KEY: 华为云账号Access Key
+     * - SECRET_ACCESS_KEY: 华为云账号Secret Access Key, 敏感信息，建议密文存储
+     */
+    private static final String ACCESS_KEY = System.getenv("HUAWEICLOUD_SDK_AK");
 
-    private static final String SECRET_ACCESS_KEY = "M7dOePlpneNQmKSVSAIV6Vp2zNtwfoGM3Lf4QIod";
+    private static final String SECRET_ACCESS_KEY = System.getenv("HUAWEICLOUD_SDK_SK");
 
     private static final String PROJECT_ID = "7c55d8e5238d42e49fd9ce11b24b035b";
 
