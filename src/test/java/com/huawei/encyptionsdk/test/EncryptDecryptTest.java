@@ -31,9 +31,9 @@ import java.util.Map;
  * @datetime 2022年 09月 16日 14:58
  */
 public class EncryptDecryptTest {
-    public static final String ACCESS_KEY = "WN0ETTDULCBZDCPDMBR8";
+    public static final String ACCESS_KEY = "your_access_key";
 
-    public static final String SECRET_ACCESS_KEY = "M7dOePlpneNQmKSVSAIV6Vp2zNtwfoGM3Lf4QIod";
+    public static final String SECRET_ACCESS_KEY = "your_secret_access_key";
 
     public static final String PROJECT_ID = "7c55d8e5238d42e49fd9ce11b24b035b";
 
