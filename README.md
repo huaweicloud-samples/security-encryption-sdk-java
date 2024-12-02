@@ -1,6 +1,6 @@
 ## 加密SDK概述
 
-​	    加密SDK（Encryption SDK）是一个客户端密码库，提供了数据的加解密、文件流加解密等功能，旨在帮助客户专注于应用程序的核心功能，而不用关心数据加密和解密的实现过程。SDK 支持KMS密钥环、本地密钥环加密等多种加密方式，并能够支持KMS 跨地域级的容灾。用户只需调用加解密接口即可轻松实现海量数据加解密。当前本项目搬迁至[这里](https://gitcode.com/HuaweiCloudDeveloper/huaweicloud-encryption-sdk-java/overview)
+​	    加密SDK（Encryption SDK）是一个客户端密码库，提供了数据的加解密、文件流加解密等功能，旨在帮助客户专注于应用程序的核心功能，而不用关心数据加密和解密的实现过程。SDK 支持KMS密钥环、本地密钥环加密等多种加密方式，并能够支持KMS 跨地域级的容灾。用户只需调用加解密接口即可轻松实现海量数据加解密。当前本项目搬迁至[这里](https://gitcode.com/HuaweiCloudDeveloper/huaweicloud-encryption-sdk-java/overview)。
 
 
 
