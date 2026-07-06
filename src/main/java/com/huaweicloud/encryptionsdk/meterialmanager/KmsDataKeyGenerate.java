@@ -46,7 +46,7 @@ public class KmsDataKeyGenerate implements DataKeyGenerate {
                 throw new HuaweicloudException(e);
             }
             dataKeyMaterials.setPlaintextDataKey(
-                new SecretKeySpec(plaintBytes, huaweiConfig.getCryptoAlgorithm().getKeySpec()));
+                new SecretKeySpec(plaintBytes, huaweiConfig.getCryptoAlgorithm().getSecKeyAlgorithm()));
             return;
         }
     }

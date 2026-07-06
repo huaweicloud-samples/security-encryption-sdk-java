@@ -8,7 +8,6 @@ import com.huaweicloud.encryptionsdk.handler.CipherHandler;
 import com.huaweicloud.encryptionsdk.model.CiphertextDataKey;
 import com.huaweicloud.encryptionsdk.model.DataKeyMaterials;
 import com.huaweicloud.encryptionsdk.model.enums.CryptoAlgorithm;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +16,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.security.Security;
 import java.util.List;
 
 /**
@@ -27,10 +25,6 @@ public class RawSM4Keyring extends RawKeyring {
     private static final Logger LOGGER = LoggerFactory.getLogger(RawSM4Keyring.class);
 
     private static final String KEY_ALGORITHM = "SM4";
-
-    static {
-        Security.addProvider(new BouncyCastleProvider());
-    }
 
     @Override
     public void realEncrypt(byte[] bytes, List<CiphertextDataKey> ciphertextDataKeys,

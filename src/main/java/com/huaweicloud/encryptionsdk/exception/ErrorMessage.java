@@ -31,7 +31,17 @@ public enum ErrorMessage {
     CACHE_PARAM_LESS_THAN_ZERO(1024, "the param of cache should not less than 0!"),
     MASTER_KEY_SHOULD_NOT_NULL(1025, "Master Key should not null"),
     SOURCE_FILE_INVALID(1026, "The length of the source file is insufficient."),
-    ;
+    KMS_CREATE_KEY_CAPSULE_EXCEPTION(1027, "create key capsule from KMS error"),
+    PARSE_KEY_CAPSULE_EXCEPTION(1028, "parse key capsule exception"),
+    DECRYPT_KEY_CAPSULE_EXCEPTION(1029, "decrypt key capsule exception"),
+    KEY_CAPSULE_NULL(1030, "key capsule is null"),
+    UNSUPPORTED_ACCESS_POINT_TYPE(1031, "unsupported access point type"),
+    CIPHER_TEXT_DATA_KEY_NOT_NULL(1032, "the cipher text data key should not be null"),
+    END_POINT_NOT_NULL(1033, "the region is not support or endpoint should not be null"),
+    KEY_CAPSULE_REGION_NOT_FOUND(1034, "the region of key capsule is not found, region is "),
+    ACCESS_POINT_KEY_EXCEPTION(1035, "The access point key material is incorrectly parsed."),
+    COLLECT_PROOF_EXCEPTION(1036, "Failed to collect the proof document."),
+    GET_PUB_KEY_EXCEPTION(1037, "Get ecc public key from private key error.");
 
     private String message;
 

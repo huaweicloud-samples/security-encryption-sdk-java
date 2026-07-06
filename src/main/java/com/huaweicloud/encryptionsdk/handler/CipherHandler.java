@@ -1,12 +1,14 @@
 package com.huaweicloud.encryptionsdk.handler;
 
+import com.huaweicloud.encryptionsdk.common.CryptoFactory;
 import com.huaweicloud.encryptionsdk.common.Utils;
 import com.huaweicloud.encryptionsdk.exception.CipherDataException;
 import com.huaweicloud.encryptionsdk.exception.ErrorMessage;
 import com.huaweicloud.encryptionsdk.exception.HuaweicloudException;
 import com.huaweicloud.encryptionsdk.model.CipherHeader;
 import com.huaweicloud.encryptionsdk.model.enums.CryptoAlgorithm;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -17,7 +19,6 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.Security;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Map;
 
@@ -25,6 +26,8 @@ import java.util.Map;
  * @description: 加解密器，具体的加密算法操作实现
  */
 public class CipherHandler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CipherHandler.class);
 
     private Cipher cipher;
 
@@ -55,12 +58,14 @@ public class CipherHandler {
     private static final SecureRandom RANDOM;
 
     static {
+        SecureRandom random;
         try {
-            RANDOM = SecureRandom.getInstanceStrong();
+            random = SecureRandom.getInstance("DRBG");
         } catch (NoSuchAlgorithmException e) {
-            throw new HuaweicloudException(e);
+            LOGGER.error("DRBG not available, using default SecureRandom");
+            random = new SecureRandom();
         }
-        Security.addProvider(new BouncyCastleProvider());
+        RANDOM = random;
     }
 
     /**
@@ -78,7 +83,7 @@ public class CipherHandler {
         try {
             byte[] algorithmIv = getIv(algorithm);
             this.iv = algorithmIv;
-            this.cipher = Cipher.getInstance(algorithm.getCryptoAlg(), BouncyCastleProvider.PROVIDER_NAME);
+            this.cipher = CryptoFactory.getCipher(algorithm.getCryptoAlg());
         } catch (Exception e) {
             throw new CipherDataException(e);
         }

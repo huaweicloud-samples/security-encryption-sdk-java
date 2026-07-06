@@ -6,9 +6,16 @@ public class CryptoResult<T> {
 
     private CipherHeader headers;
 
+    private long dataLength;
+
     public CryptoResult(T result, CipherHeader headers) {
         this.result = result;
         this.headers = headers;
+    }
+
+    public CryptoResult(T result, CipherHeader headers, long dataLength) {
+        this(result, headers);
+        this.dataLength = dataLength;
     }
 
     public T getResult() {
@@ -25,5 +32,9 @@ public class CryptoResult<T> {
 
     public void setHeaders(CipherHeader headers) {
         this.headers = headers;
+    }
+
+    public long getDataLength() {
+        return dataLength;
     }
 }

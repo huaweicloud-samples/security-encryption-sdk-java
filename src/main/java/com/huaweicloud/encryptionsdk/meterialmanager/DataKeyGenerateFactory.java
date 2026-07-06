@@ -16,6 +16,8 @@ public class DataKeyGenerateFactory {
                 return new KmsDataKeyGenerate();
             case LOCAL_GENERATE:
                 return new LocalDataKeyGenerate();
+            case KEY_CAPSULE_GENERATE:
+                return new KeyCapsuleDataKeyGenerate();
             default:
                 throw new HuaweicloudException(ErrorMessage.DATA_KEY_GENERATE_EXCEPTION.getMessage());
         }

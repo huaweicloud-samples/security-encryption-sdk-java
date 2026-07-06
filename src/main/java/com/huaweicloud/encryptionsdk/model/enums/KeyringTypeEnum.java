@@ -10,7 +10,8 @@ public enum KeyringTypeEnum {
     RAW_SM4_CBC("SM4_CBC"),
     RAW_SM4_GCN("SM4_GCM"),
     KMS_MULTI_REGION("multi"),
-    KMS_DISCOVERY("discovery");
+    KMS_DISCOVERY("discovery"),
+    KMS_KEY_CAPSULE("key_capsule");
 
     private String type;
 
