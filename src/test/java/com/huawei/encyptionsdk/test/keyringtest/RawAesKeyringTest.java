@@ -2,6 +2,7 @@ package com.huawei.encyptionsdk.test.keyringtest;
 
 import com.huaweicloud.encryptionsdk.common.FilePathForExampleConstants;
 import com.huaweicloud.encryptionsdk.common.Utils;
+import com.huaweicloud.encryptionsdk.exception.HuaweicloudException;
 import com.huaweicloud.encryptionsdk.keyrings.RawKeyringFactory;
 import com.huaweicloud.encryptionsdk.keyrings.rawkeyring.RawKeyring;
 import com.huaweicloud.encryptionsdk.model.DataKeyMaterials;
@@ -23,12 +24,6 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 
-/**
- * @author zc
- * @ClassName RawAesKeyringTest
- * @description:
- * @datetime 2022年 09月 08日 16:23
- */
 public class RawAesKeyringTest {
     @Test
     public void Should_ok_When_StateUnderAESEncryptTest()
@@ -53,5 +48,25 @@ public class RawAesKeyringTest {
         System.out.println(encodedKey);
         Assert.assertEquals(encodedKey, dataKey);
 
+    }
+
+    @Test(expected = HuaweicloudException.class)
+    public void testEncryptDataKeyEmptyKey() throws IOException {
+        RawKeyringFactory rawKeyringFactory = new RawKeyringFactory();
+        RawKeyring keyring = rawKeyringFactory.getKeyring("aes");
+        DataKeyMaterials dataKeyMaterials = new DataKeyMaterials();
+        dataKeyMaterials.setCryptoAlgorithm(CryptoAlgorithm.AES_128_GCM_NOPADDING);
+        byte[] decode = Base64.getDecoder().decode("5sFKOkwE2lRAIASXm3QFNoNRX1GbEKYgVZHmOdi7smU=");
+        dataKeyMaterials.setPlaintextDataKey(new SecretKeySpec(decode, 0, decode.length, "AES"));
+        keyring.encryptDataKey(dataKeyMaterials);
+    }
+
+    @Test(expected = HuaweicloudException.class)
+    public void testDecryptDataKeyEmptyKey() throws IOException {
+        RawKeyringFactory rawKeyringFactory = new RawKeyringFactory();
+        RawKeyring keyring = rawKeyringFactory.getKeyring("aes");
+        DataKeyMaterials dataKeyMaterials = new DataKeyMaterials();
+        dataKeyMaterials.setCryptoAlgorithm(CryptoAlgorithm.AES_128_GCM_NOPADDING);
+        keyring.decryptDataKey(dataKeyMaterials);
     }
 }

@@ -3,6 +3,7 @@ package com.huaweicloud.encryptionsdk.keyrings;
 import com.huaweicloud.encryptionsdk.exception.ErrorMessage;
 import com.huaweicloud.encryptionsdk.exception.KeyringNotFoundException;
 import com.huaweicloud.encryptionsdk.keyrings.kmskeyring.KMSDiscoveryKeyring;
+import com.huaweicloud.encryptionsdk.keyrings.kmskeyring.KMSKeyCapsuleKeyring;
 import com.huaweicloud.encryptionsdk.keyrings.kmskeyring.KMSKeyring;
 import com.huaweicloud.encryptionsdk.keyrings.kmskeyring.KMSMultiRegionKeyring;
 import com.huaweicloud.encryptionsdk.model.enums.KeyringTypeEnum;
@@ -22,6 +23,8 @@ public class KmsKeyringFactory implements KeyringFactory {
                 return new KMSDiscoveryKeyring();
             case KMS_MULTI_REGION:
                 return new KMSMultiRegionKeyring();
+            case KMS_KEY_CAPSULE:
+                return new KMSKeyCapsuleKeyring();
             default:
                 return null;
         }

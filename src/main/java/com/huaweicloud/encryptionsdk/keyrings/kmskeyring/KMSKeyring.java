@@ -25,13 +25,11 @@ import com.huaweicloud.sdk.kms.v2.model.OperateKeyRequestBody;
 import com.huaweicloud.sdk.kms.v2.region.KmsRegion;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import java.security.Security;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,10 +44,6 @@ import java.util.concurrent.ExecutionException;
 public abstract class KMSKeyring implements Keyring {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KMSKeyring.class);
-
-    static {
-        Security.addProvider(new BouncyCastleProvider());
-    }
 
     /**
      * kms服务版本号
@@ -215,7 +209,7 @@ public abstract class KMSKeyring implements Keyring {
                             .withDatakeyCipherLength("32"));
                     DecryptDatakeyResponse decryptDataResponse = kmsClient.decryptDatakey(decryptDataRequest);
                     byte[] plaintBytes = Hex.decodeHex(decryptDataResponse.getDataKey().toCharArray());
-                    String algorithmName = dataKeyMaterials.getCryptoAlgorithm().getKeySpec();
+                    String algorithmName = dataKeyMaterials.getCryptoAlgorithm().getSecKeyAlgorithm();
                     dataKeyMaterials.setPlaintextDataKey(
                         new SecretKeySpec(plaintBytes, 0, plaintBytes.length, algorithmName));
                     return;

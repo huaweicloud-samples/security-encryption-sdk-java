@@ -3,6 +3,7 @@ package com.huaweicloud.encryptionsdk.meterialmanager;
 import com.huaweicloud.encryptionsdk.HuaweiConfig;
 import com.huaweicloud.encryptionsdk.cache.DataKeyCache;
 import com.huaweicloud.encryptionsdk.common.Constants;
+import com.huaweicloud.encryptionsdk.common.CryptoFactory;
 import com.huaweicloud.encryptionsdk.common.Utils;
 import com.huaweicloud.encryptionsdk.exception.ErrorMessage;
 import com.huaweicloud.encryptionsdk.exception.HuaweicloudException;
@@ -12,9 +13,12 @@ import com.huaweicloud.encryptionsdk.model.CipherHeader;
 import com.huaweicloud.encryptionsdk.model.CiphertextDataKey;
 import com.huaweicloud.encryptionsdk.model.DataKeyMaterials;
 import com.huaweicloud.encryptionsdk.model.DataMaterials;
+import com.huaweicloud.encryptionsdk.model.KMSConfig;
+import com.huaweicloud.encryptionsdk.model.KeyCapsule;
+import com.huaweicloud.encryptionsdk.model.KeyCapsuleConfig;
 import com.huaweicloud.encryptionsdk.model.enums.CryptoAlgorithm;
 import org.apache.commons.codec.DecoderException;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +28,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.Security;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -128,14 +131,14 @@ public class CacheCryptoMeterialManager implements CryptoMeterialManager {
         try {
             if (dataKeyMaterials.getCryptoAlgorithm() == CryptoAlgorithm.SM4_128_GCM_NOPADDING
                 || dataKeyMaterials.getCryptoAlgorithm() == CryptoAlgorithm.SM4_128_CBC_PADDING) {
-                Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-                digest = MessageDigest.getInstance(CACHE_ID_ALGORITHM_SM3, BouncyCastleProvider.PROVIDER_NAME);
+                digest = CryptoFactory.getMessageDigest(CACHE_ID_ALGORITHM_SM3);
             } else {
-                digest = MessageDigest.getInstance(CACHE_ID_ALGORITHM_SHA, BouncyCastleProvider.PROVIDER_NAME);
+                digest = CryptoFactory.getMessageDigest(CACHE_ID_ALGORITHM_SHA);
             }
             digestAlgorithm(dataKeyMaterials.getCryptoAlgorithm(), digest);
             byte[] bytes = Utils.serializeContext(dataKeyMaterials.getEncryptionContexts());
             digestContext(digest, bytes);
+            digestKeyCapsule(digest, huaweiConfig, dataKeyMaterials);
             return Base64.getEncoder().encodeToString(digest.digest());
         } catch (Exception e) {
             throw new HuaweicloudException(ErrorMessage.MESSAGE_DIGEST_ERROR.getMessage(), e);
@@ -169,7 +172,7 @@ public class CacheCryptoMeterialManager implements CryptoMeterialManager {
         DataMaterials dataMaterials = new DefaultSerializeHandler().deserialize(cipherText);
         CipherHeader headers = dataMaterials.getHeaders();
         String cacheId = getCacheId(headers.getAlgorithm(), headers.getEncryptionContext(),
-            headers.getCiphertextDataKeys());
+            headers.getCiphertextDataKeys(), headers.getKeyCapsule());
         DataKeyCache.DecryptCacheEntry entryForDecrypt = cache.getEntryForDecrypt(cacheId);
         if (entryForDecrypt != null) {
             LOGGER.info("get decrypt dataKeyMaterials from cache success,  cacheId {}", cacheId);
@@ -180,6 +183,9 @@ public class CacheCryptoMeterialManager implements CryptoMeterialManager {
         dataKeyMaterials.setCiphertextDataKeys(dataMaterials.getHeaders().getCiphertextDataKeys());
         dataKeyMaterials.setCryptoAlgorithm(dataMaterials.getHeaders().getAlgorithm());
         dataKeyMaterials.setEncryptionContexts(dataMaterials.getHeaders().getEncryptionContext());
+        if (headers.getKeyCapsule() != null) {
+            dataKeyMaterials.setKeyCapsule(headers.getKeyCapsule());
+        }
         dataKeyMaterials = keyring.decryptDataKey(dataKeyMaterials);
         cache.putEntryForDecrypt(cacheId, dataKeyMaterials);
         return dataKeyMaterials;
@@ -202,7 +208,8 @@ public class CacheCryptoMeterialManager implements CryptoMeterialManager {
         }
         DataMaterials dataMaterials = new DefaultSerializeHandler().deserialize(bytes);
         String cacheId = getCacheId(dataMaterials.getHeaders().getAlgorithm(),
-            dataMaterials.getHeaders().getEncryptionContext(), dataMaterials.getHeaders().getCiphertextDataKeys());
+            dataMaterials.getHeaders().getEncryptionContext(), dataMaterials.getHeaders().getCiphertextDataKeys(),
+            dataMaterials.getHeaders().getKeyCapsule());
         DataKeyCache.DecryptCacheEntry entryForDecrypt = cache.getEntryForDecrypt(cacheId);
         if (entryForDecrypt != null) {
             LOGGER.info("get decrypt dataKeyMaterials from cache success,  cacheId {}", cacheId);
@@ -213,25 +220,28 @@ public class CacheCryptoMeterialManager implements CryptoMeterialManager {
         dataKeyMaterials.setCiphertextDataKeys(dataMaterials.getHeaders().getCiphertextDataKeys());
         dataKeyMaterials.setCryptoAlgorithm(dataMaterials.getHeaders().getAlgorithm());
         dataKeyMaterials.setEncryptionContexts(dataMaterials.getHeaders().getEncryptionContext());
+        if (dataMaterials.getHeaders().getKeyCapsule() != null) {
+            dataKeyMaterials.setKeyCapsule(dataMaterials.getHeaders().getKeyCapsule());
+        }
         keyring.decryptDataKey(dataKeyMaterials);
         cache.putEntryForDecrypt(cacheId, dataKeyMaterials);
         return dataKeyMaterials;
     }
 
     private String getCacheId(CryptoAlgorithm algorithm, Map<String, String> encryptionContext,
-        List<CiphertextDataKey> ciphertextDataKeys) {
+        List<CiphertextDataKey> ciphertextDataKeys, KeyCapsule keyCapsule) {
         MessageDigest messageDigest = null;
         try {
             if (algorithm == CryptoAlgorithm.SM4_128_GCM_NOPADDING) {
-                Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-                messageDigest = MessageDigest.getInstance(CACHE_ID_ALGORITHM_SM3, BouncyCastleProvider.PROVIDER_NAME);
+                messageDigest = CryptoFactory.getMessageDigest(CACHE_ID_ALGORITHM_SM3);
             } else {
-                messageDigest = MessageDigest.getInstance(CACHE_ID_ALGORITHM_SHA, BouncyCastleProvider.PROVIDER_NAME);
+                messageDigest = CryptoFactory.getMessageDigest(CACHE_ID_ALGORITHM_SHA);
             }
             digestAlgorithm(algorithm, messageDigest);
             byte[] bytesContext = Utils.serializeContext(encryptionContext);
             digestContext(messageDigest, bytesContext);
             digestCiphertextDataKeys(messageDigest, ciphertextDataKeys);
+            digestKeyCapsule(messageDigest, keyCapsule);
             return Base64.getEncoder().encodeToString(messageDigest.digest());
         } catch (Exception e) {
             throw new HuaweicloudException(ErrorMessage.MESSAGE_DIGEST_ERROR.getMessage(), e);
@@ -260,6 +270,45 @@ public class CacheCryptoMeterialManager implements CryptoMeterialManager {
             set.addAll(ciphertextDataKeys);
             for (CiphertextDataKey ciphertextDataKey : set) {
                 digest.update(ciphertextDataKey.toByteArray());
+            }
+        }
+    }
+
+    private void digestKeyCapsule(MessageDigest digest, KeyCapsule keyCapsule) {
+        if (keyCapsule == null) {
+            digest.update((byte) 0);
+        } else {
+            digest.update((byte) 1);
+            if (keyCapsule.getKeyId() != null) {
+                digest.update(keyCapsule.getKeyId().getBytes(StandardCharsets.UTF_8));
+            }
+            if (keyCapsule.getDatakeyCapsule() != null) {
+                digest.update(keyCapsule.getDatakeyCapsule().getBytes(StandardCharsets.UTF_8));
+            }
+            digest.update((byte) keyCapsule.getAccessPointType());
+        }
+    }
+
+    private void digestKeyCapsule(MessageDigest digest, HuaweiConfig huaweiConfig, DataKeyMaterials dataKeyMaterials) {
+        KeyCapsuleConfig keyCapsuleConfig = huaweiConfig.getKeyCapsuleConfig();
+        if (keyCapsuleConfig == null) {
+            digest.update((byte) 0);
+        } else {
+            digest.update((byte) 1);
+            KMSConfig kmsConfig = Utils.getCapsuleKMSConfig(huaweiConfig.getKmsConfigList(), keyCapsuleConfig);
+            digest.update(kmsConfig.getKeyId().getBytes(StandardCharsets.UTF_8));
+            if (StringUtils.isNotEmpty(dataKeyMaterials.getKeyPolicy()) || StringUtils.isNotEmpty(dataKeyMaterials.getPolicyId())) {
+                if (StringUtils.isNotEmpty(dataKeyMaterials.getKeyPolicy())) {
+                    digest.update(dataKeyMaterials.getKeyPolicy().getBytes(StandardCharsets.UTF_8));
+                } else if (StringUtils.isNotEmpty(dataKeyMaterials.getPolicyId())) {
+                    digest.update(dataKeyMaterials.getPolicyId().getBytes(StandardCharsets.UTF_8));
+                }
+            } else {
+                if (StringUtils.isNotEmpty(keyCapsuleConfig.getDefaultKeyPolicy())) {
+                    digest.update(keyCapsuleConfig.getDefaultKeyPolicy().getBytes(StandardCharsets.UTF_8));
+                } else if (StringUtils.isNotEmpty(keyCapsuleConfig.getDefaultPolicyId())) {
+                    digest.update(keyCapsuleConfig.getDefaultPolicyId().getBytes(StandardCharsets.UTF_8));
+                }
             }
         }
     }

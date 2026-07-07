@@ -3,10 +3,11 @@ package com.huaweicloud.encryptionsdk.common;
 import com.huaweicloud.encryptionsdk.exception.ErrorMessage;
 import com.huaweicloud.encryptionsdk.exception.HuaweicloudException;
 import com.huaweicloud.encryptionsdk.exception.KeyParseException;
+import com.huaweicloud.encryptionsdk.model.KMSConfig;
+import com.huaweicloud.encryptionsdk.model.KeyCapsuleConfig;
 import com.huaweicloud.sdk.core.utils.StringUtils;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -20,7 +21,6 @@ import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.Security;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
@@ -106,8 +106,7 @@ public class Utils {
     public static byte[] commonHash(byte[] data, String alg) {
         byte[] digest = null;
         try {
-            Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-            MessageDigest md = MessageDigest.getInstance(alg, BouncyCastleProvider.PROVIDER_NAME);
+            MessageDigest md = CryptoFactory.getMessageDigest(alg);
             md.update(data);
             digest = md.digest();
         } catch (Exception e) {
@@ -133,7 +132,7 @@ public class Utils {
     public static PublicKey getPublicKey(byte[] publicKey, String algFlag) {
         try {
             X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKey);
-            KeyFactory keyFactory = KeyFactory.getInstance(algFlag, new BouncyCastleProvider());
+            KeyFactory keyFactory = CryptoFactory.getKeyFactory(algFlag);
             return keyFactory.generatePublic(keySpec);
         } catch (Exception e) {
             throw new KeyParseException(ErrorMessage.PUBLIC_KEY_PARSE_EXCEPTION.getMessage(), e);
@@ -143,7 +142,7 @@ public class Utils {
     public static PrivateKey getPrivateKey(byte[] privateKey, String algFlag) {
         try {
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKey);
-            KeyFactory keyFactory = KeyFactory.getInstance(algFlag, new BouncyCastleProvider());
+            KeyFactory keyFactory = CryptoFactory.getKeyFactory(algFlag);
             return keyFactory.generatePrivate(keySpec);
         } catch (Exception e) {
             throw new KeyParseException(ErrorMessage.PRIVATE_KEY_PARSE_EXCEPTION.getMessage(), e);
@@ -222,4 +221,23 @@ public class Utils {
         return new String(Hex.encodeHex(bytes));
     }
 
+    public static KMSConfig getCapsuleKMSConfig(List<KMSConfig> kmsConfigList, KeyCapsuleConfig keyCapsuleConfig) {
+        if (Utils.isEmpty(kmsConfigList)) {
+            throw new HuaweicloudException(ErrorMessage.CONFIG_NULL_ERROR.getMessage());
+        }
+        if (keyCapsuleConfig == null) {
+            throw new HuaweicloudException("KeyCapsuleConfig is required for key capsule mode");
+        }
+        KMSConfig kmsConfig = null;
+        for (KMSConfig tempConfig : kmsConfigList) {
+            if (tempConfig.getRegion().equalsIgnoreCase(keyCapsuleConfig.getRegion())) {
+                kmsConfig = tempConfig;
+                break;
+            }
+        }
+        if (kmsConfig == null) {
+            throw new HuaweicloudException(ErrorMessage.KEY_CAPSULE_REGION_NOT_FOUND.getMessage() + keyCapsuleConfig.getRegion());
+        }
+        return kmsConfig;
+    }
 }

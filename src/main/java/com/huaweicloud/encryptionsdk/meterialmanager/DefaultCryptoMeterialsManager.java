@@ -5,6 +5,7 @@ import com.huaweicloud.encryptionsdk.exception.ErrorMessage;
 import com.huaweicloud.encryptionsdk.exception.HuaweicloudException;
 import com.huaweicloud.encryptionsdk.handler.DefaultSerializeHandler;
 import com.huaweicloud.encryptionsdk.keyrings.Keyring;
+import com.huaweicloud.encryptionsdk.keyrings.kmskeyring.KMSKeyCapsuleKeyring;
 import com.huaweicloud.encryptionsdk.keyrings.kmskeyring.KMSKeyring;
 import com.huaweicloud.encryptionsdk.model.DataKeyMaterials;
 import com.huaweicloud.encryptionsdk.model.DataMaterials;
@@ -38,12 +39,20 @@ public class DefaultCryptoMeterialsManager implements CryptoMeterialManager {
         long plaintTextLength)
         throws NoSuchAlgorithmException, IOException, ExecutionException, InterruptedException, DecoderException {
         DataKeyGenerate dataKeyGenerate;
-        if (keyring instanceof KMSKeyring) {
+
+        if (keyring instanceof KMSKeyCapsuleKeyring) {
+            // 密钥胶囊模式
+            dataKeyGenerate = DataKeyGenerateFactory.getDataKeyGenerate(DataKeyGenerateType.KEY_CAPSULE_GENERATE);
+            ((KMSKeyCapsuleKeyring) keyring).setHuaweiConfig(huaweiConfig);
+        } else if (keyring instanceof KMSKeyring) {
+            // 普通KMS模式
             dataKeyGenerate = DataKeyGenerateFactory.getDataKeyGenerate(DataKeyGenerateType.KMS_GENERATE);
             ((KMSKeyring) keyring).setHuaweiConfig(huaweiConfig);
         } else {
+            // 本地模式
             dataKeyGenerate = DataKeyGenerateFactory.getDataKeyGenerate(DataKeyGenerateType.LOCAL_GENERATE);
         }
+
         dataKeyGenerate.dataKeyGenerate(huaweiConfig, dataKeyMaterials);
         return keyring.encryptDataKey(dataKeyMaterials);
     }
@@ -55,9 +64,18 @@ public class DefaultCryptoMeterialsManager implements CryptoMeterialManager {
         dataKeyMaterials.setCiphertextDataKeys(dataMaterials.getHeaders().getCiphertextDataKeys());
         dataKeyMaterials.setCryptoAlgorithm(dataMaterials.getHeaders().getAlgorithm());
         dataKeyMaterials.setEncryptionContexts(dataMaterials.getHeaders().getEncryptionContext());
-        if (keyring instanceof KMSKeyring) {
+
+        // 解析密钥胶囊（如果存在）
+        if (dataMaterials.getHeaders().getKeyCapsule() != null) {
+            dataKeyMaterials.setKeyCapsule(dataMaterials.getHeaders().getKeyCapsule());
+        }
+
+        if (keyring instanceof KMSKeyCapsuleKeyring) {
+            ((KMSKeyCapsuleKeyring) keyring).setHuaweiConfig(huaweiConfig);
+        } else if (keyring instanceof KMSKeyring) {
             ((KMSKeyring) keyring).setHuaweiConfig(huaweiConfig);
         }
+
         return keyring.decryptDataKey(dataKeyMaterials);
     }
 
@@ -81,9 +99,18 @@ public class DefaultCryptoMeterialsManager implements CryptoMeterialManager {
         dataKeyMaterials.setCiphertextDataKeys(dataMaterials.getHeaders().getCiphertextDataKeys());
         dataKeyMaterials.setCryptoAlgorithm(dataMaterials.getHeaders().getAlgorithm());
         dataKeyMaterials.setEncryptionContexts(dataMaterials.getHeaders().getEncryptionContext());
-        if (keyring instanceof KMSKeyring) {
+
+        // 解析密钥胶囊（如果存在）
+        if (dataMaterials.getHeaders().getKeyCapsule() != null) {
+            dataKeyMaterials.setKeyCapsule(dataMaterials.getHeaders().getKeyCapsule());
+        }
+
+        if (keyring instanceof KMSKeyCapsuleKeyring) {
+            ((KMSKeyCapsuleKeyring) keyring).setHuaweiConfig(huaweiConfig);
+        } else if (keyring instanceof KMSKeyring) {
             ((KMSKeyring) keyring).setHuaweiConfig(huaweiConfig);
         }
+
         return keyring.decryptDataKey(dataKeyMaterials);
     }
 

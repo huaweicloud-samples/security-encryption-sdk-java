@@ -18,6 +18,21 @@ public final class DataKeyMaterials {
 
     private CryptoAlgorithm cryptoAlgorithm;
 
+    /**
+     * 密钥胶囊（密钥胶囊模式时使用）
+     */
+    private KeyCapsule keyCapsule;
+
+    /**
+     * 策略ID（与 keyPolicy 二选一，优先使用）
+     */
+    private String policyId;
+
+    /**
+     * 内联策略（与 policyId 二选一，policyId 未设置时使用）
+     */
+    private String keyPolicy;
+
     public SecretKey getPlaintextDataKey() {
         return plaintextDataKey;
     }
@@ -50,4 +65,27 @@ public final class DataKeyMaterials {
         this.cryptoAlgorithm = cryptoAlgorithm;
     }
 
+    public KeyCapsule getKeyCapsule() {
+        return keyCapsule;
+    }
+
+    public void setKeyCapsule(KeyCapsule keyCapsule) {
+        this.keyCapsule = keyCapsule;
+    }
+
+    public String getPolicyId() {
+        return policyId;
+    }
+
+    public void setPolicyId(String policyId) {
+        this.policyId = policyId;
+    }
+
+    public String getKeyPolicy() {
+        return keyPolicy;
+    }
+
+    public void setKeyPolicy(String keyPolicy) {
+        this.keyPolicy = keyPolicy;
+    }
 }

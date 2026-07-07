@@ -18,11 +18,4 @@ public class FilePathForExampleConstants {
 
     public static final String TEST_PPT_FILE_PATH = "src/test/resources/test.txt";
 
-    public static final String ENCRYPTED_TXT_FILE_PATH = "src/test/resources/test.encrypted.txt";
-
-    public static final String DECRYPTED_TXT_FILE_PATH = "src/test/resources/test.decrypted.txt";
-
-    public static final String ENCRYPTED_CACHE_TXT_FILE_PATH = "src/test/resources/test.encrypted.Cache.txt";
-
-    public static final String DECRYPTED_CACHE_TXT_FILE_PATH = "src/test/resources/test.decrypted.Cache.txt";
 }

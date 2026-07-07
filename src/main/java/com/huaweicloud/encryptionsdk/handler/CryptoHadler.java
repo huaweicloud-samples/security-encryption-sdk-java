@@ -7,8 +7,7 @@ import com.huaweicloud.encryptionsdk.model.request.EncryptRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
+import java.security.GeneralSecurityException;
 import java.util.Map;
 
 /**
@@ -24,7 +23,7 @@ public interface CryptoHadler {
      * dataKeyMaterials：数据密钥和算法等加密必要信息
      **/
     CryptoResult<byte[]> encrypt(EncryptRequest request, DataKeyMaterials dataKeyMaterials)
-        throws NoSuchAlgorithmException, NoSuchProviderException;
+        throws GeneralSecurityException;
 
     /**
      * @return com.huaweicloud.encryptionsdk.model.CryptoResult<byte [ ]>
@@ -46,7 +45,7 @@ public interface CryptoHadler {
      **/
     CryptoResult<OutputStream> encrypt(InputStream inputStream, OutputStream outputStream,
         DataKeyMaterials dataKeyMaterials, Map<String, String> encryptionContext)
-        throws IOException, NoSuchAlgorithmException, NoSuchProviderException;
+        throws IOException, GeneralSecurityException;
 
     /**
      * @return com.huaweicloud.encryptionsdk.model.CryptoResult<java.io.OutputStream>

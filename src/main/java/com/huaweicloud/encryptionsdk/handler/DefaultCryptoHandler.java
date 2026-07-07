@@ -1,5 +1,6 @@
 package com.huaweicloud.encryptionsdk.handler;
 
+import com.huaweicloud.encryptionsdk.common.CountingOutputStream;
 import com.huaweicloud.encryptionsdk.common.Constants;
 import com.huaweicloud.encryptionsdk.exception.ErrorMessage;
 import com.huaweicloud.encryptionsdk.exception.HuaweicloudException;
@@ -10,20 +11,23 @@ import com.huaweicloud.encryptionsdk.model.DataKeyMaterials;
 import com.huaweicloud.encryptionsdk.model.DataMaterials;
 import com.huaweicloud.encryptionsdk.model.enums.CryptoAlgorithm;
 import com.huaweicloud.encryptionsdk.model.request.EncryptRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.crypto.Cipher;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
+import java.security.GeneralSecurityException;
 import java.util.Map;
 
 /**
  * @description: 加密处理器，负责数据加解密数据拆分合并等处理
  */
 public class DefaultCryptoHandler implements CryptoHadler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultCryptoHandler.class);
 
     private SerializeHandler serializeHandler;
 
@@ -33,7 +37,7 @@ public class DefaultCryptoHandler implements CryptoHadler {
 
     @Override
     public CryptoResult<byte[]> encrypt(EncryptRequest request, DataKeyMaterials dataKeyMaterials)
-        throws NoSuchAlgorithmException, NoSuchProviderException {
+        throws GeneralSecurityException {
         CipherHandler cipherHandler = new CipherHandler(dataKeyMaterials.getCryptoAlgorithm(),
             dataKeyMaterials.getPlaintextDataKey(), Cipher.ENCRYPT_MODE);
         byte[] encryptedData = cipherHandler.cipherData(request.getPlainText(), request.getEncryptionContext(), 0,
@@ -51,11 +55,11 @@ public class DefaultCryptoHandler implements CryptoHadler {
         }
         CipherHeader cipherHeader = new CipherHeader(dataKeyMaterials.getCryptoAlgorithm(),
             dataKeyMaterials.getEncryptionContexts(), dataKeyMaterials.getCiphertextDataKeys(),
-            dataKeyMaterials.getPlaintextDataKey());
+            dataKeyMaterials.getPlaintextDataKey(), dataKeyMaterials.getKeyCapsule());
         CipherBody cipherBody = new CipherBody(cipherHandler.getIv(), cipherText, cipherText.length, authTag);
         DataMaterials dataMaterials = new DataMaterials(cipherBody, cipherHeader);
         byte[] serializedData = serializeHandler.serialize(dataMaterials);
-        return new CryptoResult<>(serializedData, cipherHeader);
+        return new CryptoResult<>(serializedData, cipherHeader, cipherText.length);
     }
 
     @Override
@@ -93,30 +97,32 @@ public class DefaultCryptoHandler implements CryptoHadler {
     @Override
     public CryptoResult<OutputStream> encrypt(InputStream inputStream, OutputStream outputStream,
         DataKeyMaterials dataKeyMaterials, Map<String, String> encryptionContext)
-        throws IOException, NoSuchAlgorithmException, NoSuchProviderException {
+        throws IOException, GeneralSecurityException {
+        CountingOutputStream countingStream = new CountingOutputStream(outputStream);
         CipherHeader cipherHeader = new CipherHeader(dataKeyMaterials.getCryptoAlgorithm(),
             dataKeyMaterials.getEncryptionContexts(), dataKeyMaterials.getCiphertextDataKeys(),
-            dataKeyMaterials.getPlaintextDataKey());
+            dataKeyMaterials.getPlaintextDataKey(), dataKeyMaterials.getKeyCapsule());
         byte[] authenticatedFields = cipherHeader.serializeAuthenticatedFields();
-        outputStream.write(shortToByte((short) (authenticatedFields.length + 2 + cipherHeader.getHeaderTagLength())));
-        outputStream.write(authenticatedFields);
-        outputStream.write(shortToByte(cipherHeader.getHeaderTagLength()));
-        outputStream.write(cipherHeader.getHeaderTag());
+        countingStream.write(shortToByte((short) (authenticatedFields.length + 2 + cipherHeader.getHeaderTagLength())));
+        countingStream.write(authenticatedFields);
+        countingStream.write(shortToByte(cipherHeader.getHeaderTagLength()));
+        countingStream.write(cipherHeader.getHeaderTag());
         FileEncryptHandler fileEncryptHandler = new FileEncryptHandler(dataKeyMaterials.getCryptoAlgorithm(),
             dataKeyMaterials.getPlaintextDataKey(), Cipher.ENCRYPT_MODE);
-        fileEncryptHandler.processByte(inputStream, outputStream, dataKeyMaterials.getEncryptionContexts(),
+        fileEncryptHandler.processByte(inputStream, countingStream, dataKeyMaterials.getEncryptionContexts(),
             Constants.BLOCK_SIZE);
-        return new CryptoResult<>(outputStream, cipherHeader);
+        return new CryptoResult<>(countingStream, cipherHeader, countingStream.getBytesWritten());
     }
 
     @Override
     public CryptoResult<OutputStream> decrypt(InputStream inputStream, OutputStream outputStream,
         DataKeyMaterials dataKeyMaterials) throws IOException {
+        CountingOutputStream countingStream = new CountingOutputStream(outputStream);
         FileDecryptHandler fileDecryptHandler = new FileDecryptHandler(dataKeyMaterials.getCryptoAlgorithm(),
             dataKeyMaterials.getPlaintextDataKey(), Cipher.DECRYPT_MODE);
-        fileDecryptHandler.processByte(inputStream, outputStream, dataKeyMaterials.getEncryptionContexts(),
+        fileDecryptHandler.processByte(inputStream, countingStream, dataKeyMaterials.getEncryptionContexts(),
             Constants.BLOCK_SIZE);
-        return new CryptoResult<>(outputStream, null);
+        return new CryptoResult<>(countingStream, null, countingStream.getBytesWritten());
     }
 
     private byte[] shortToByte(short num) {

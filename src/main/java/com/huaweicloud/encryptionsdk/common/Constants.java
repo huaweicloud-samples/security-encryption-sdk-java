@@ -13,4 +13,9 @@ public class Constants {
     public static final Integer BLOCK_SIZE = 1024;
 
     public static final byte VERSION = 1;
+
+    /**
+     * 支持密钥胶囊的版本号
+     */
+    public static final byte VERSION_SUPPORT_KEY_CAPSULE = 2;
 }

@@ -6,7 +6,7 @@ package com.huaweicloud.encryptionsdk.model.enums;
 public enum DataKeyGenerateType {
     LOCAL_GENERATE("create data key from local", 1),
     KMS_GENERATE("create data key from KMS", 2),
-    ;
+    KEY_CAPSULE_GENERATE("create data key from key capsule", 3);
 
     private String desc;
 

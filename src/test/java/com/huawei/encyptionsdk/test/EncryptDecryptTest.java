@@ -15,7 +15,6 @@ import com.huaweicloud.encryptionsdk.model.enums.CryptoAlgorithm;
 import com.huaweicloud.encryptionsdk.model.enums.KeyringTypeEnum;
 import com.huaweicloud.encryptionsdk.model.request.EncryptRequest;
 import com.huaweicloud.encryptionsdk.util.CommonUtils;
-
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -127,8 +126,7 @@ public class EncryptDecryptTest {
             .cryptoAlgorithm(CryptoAlgorithm.AES_256_GCM_NOPADDING)
             .build();
         RawKeyring keyring = new RawKeyringFactory().getKeyring(KeyringTypeEnum.RAW_AES.getType());
-        keyring.setSymmetricKey(
-            Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.BIT_256_FILE_PATH)));
+        keyring.setSymmetricKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.BIT_256_FILE_PATH)));
 
         HuaweiCrypto huaweiCrypto = new HuaweiCrypto(huaweiConfig).withKeyring(keyring);
 
@@ -147,8 +145,7 @@ public class EncryptDecryptTest {
             .cryptoAlgorithm(CryptoAlgorithm.SM4_128_GCM_NOPADDING)
             .build();
         RawKeyring keyring = new RawKeyringFactory().getKeyring(KeyringTypeEnum.RAW_SM4_GCN.getType());
-        keyring.setSymmetricKey(
-            Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.BIT_128_FILE_PATH)));
+        keyring.setSymmetricKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.BIT_128_FILE_PATH)));
 
         HuaweiCrypto huaweiCrypto = new HuaweiCrypto(huaweiConfig).withKeyring(keyring);
 
@@ -167,8 +164,7 @@ public class EncryptDecryptTest {
             .cryptoAlgorithm(CryptoAlgorithm.SM4_128_GCM_NOPADDING)
             .build();
         RawKeyring keyring = new RawKeyringFactory().getKeyring(KeyringTypeEnum.RAW_SM4_CBC.getType());
-        keyring.setSymmetricKey(
-            Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.BIT_128_FILE_PATH)));
+        keyring.setSymmetricKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.BIT_128_FILE_PATH)));
 
         HuaweiCrypto huaweiCrypto = new HuaweiCrypto(huaweiConfig).withKeyring(keyring);
 
@@ -187,8 +183,7 @@ public class EncryptDecryptTest {
             .cryptoAlgorithm(CryptoAlgorithm.SM4_128_GCM_NOPADDING)
             .build();
         RawKeyring keyring = new RawKeyringFactory().getKeyring(KeyringTypeEnum.RAW_SM2.getType());
-        keyring.setPrivateKey(
-            Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.PRI_FILE_PATH)));
+        keyring.setPrivateKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.PRI_FILE_PATH)));
         keyring.setPublicKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.PUB_FILE_PATH)));
 
         HuaweiCrypto huaweiCrypto = new HuaweiCrypto(huaweiConfig).withKeyring(keyring);
@@ -208,10 +203,8 @@ public class EncryptDecryptTest {
             .cryptoAlgorithm(CryptoAlgorithm.AES_128_GCM_NOPADDING)
             .build();
         RawKeyring keyring = new RawKeyringFactory().getKeyring(KeyringTypeEnum.RAW_RSA.getType());
-        keyring.setPrivateKey(
-            Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.RSA_PRI_FILE_PATH)));
-        keyring.setPublicKey(
-            Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.RSA_PUB_FILE_PATH)));
+        keyring.setPrivateKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.RSA_PRI_FILE_PATH)));
+        keyring.setPublicKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.RSA_PUB_FILE_PATH)));
 
         HuaweiCrypto huaweiCrypto = new HuaweiCrypto(huaweiConfig).withKeyring(keyring);
         Map<String, String> map = CommonUtils.getEncryptoMap();

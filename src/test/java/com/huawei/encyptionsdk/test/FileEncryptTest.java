@@ -14,12 +14,15 @@ import com.huaweicloud.encryptionsdk.util.CommonUtils;
 import org.apache.commons.codec.DecoderException;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.Map;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author zc
@@ -42,15 +45,20 @@ public class FileEncryptTest {
 
         HuaweiCrypto huaweiCrypto = new HuaweiCrypto(huaweiConfig).withKeyring(keyring);
         Map<String, String> map = CommonUtils.getEncryptoMap();
+        File encryptedFile = File.createTempFile("128bit", ".encrypted");
+        File decryptedFile = File.createTempFile("128bit", ".decrypted");
+        encryptedFile.deleteOnExit();
+        decryptedFile.deleteOnExit();
         try (FileInputStream fileInputStream = new FileInputStream(FilePathForExampleConstants.BIT_128_FILE_PATH);
-            FileOutputStream fileOutputStream = new FileOutputStream("src/test/resources/128bit.encrypted")) {
+            FileOutputStream fileOutputStream = new FileOutputStream(encryptedFile)) {
             huaweiCrypto.encrypt(fileInputStream, fileOutputStream, map);
         }
-        try (FileInputStream in = new FileInputStream("src/test/resources/128bit.encrypted");
-            FileOutputStream out = new FileOutputStream("src/test/resources/128bit.decrypted")) {
+        try (FileInputStream in = new FileInputStream(encryptedFile);
+            FileOutputStream out = new FileOutputStream(decryptedFile)) {
             huaweiCrypto.decrypt(in, out);
         }
-        // 解密
+        assertTrue(encryptedFile.length() > 0);
+        assertTrue(decryptedFile.length() > 0);
     }
 
     @Test
@@ -66,16 +74,20 @@ public class FileEncryptTest {
 
         HuaweiCrypto huaweiCrypto = new HuaweiCrypto(huaweiConfig).withKeyring(keyring);
         Map<String, String> map = CommonUtils.getEncryptoMap();
+        File encryptedFile = File.createTempFile("test", ".encrypted.txt");
+        File decryptedFile = File.createTempFile("test", ".decrypted.txt");
+        encryptedFile.deleteOnExit();
+        decryptedFile.deleteOnExit();
         try (FileInputStream fileInputStream = new FileInputStream(FilePathForExampleConstants.TEST_PPT_FILE_PATH);
-            FileOutputStream fileOutputStream = new FileOutputStream(
-                FilePathForExampleConstants.ENCRYPTED_TXT_FILE_PATH)) {
+            FileOutputStream fileOutputStream = new FileOutputStream(encryptedFile)) {
             huaweiCrypto.encrypt(fileInputStream, fileOutputStream, map);
         }
-        try (FileInputStream in = new FileInputStream(FilePathForExampleConstants.ENCRYPTED_TXT_FILE_PATH);
-            FileOutputStream out = new FileOutputStream(FilePathForExampleConstants.DECRYPTED_TXT_FILE_PATH)) {
+        try (FileInputStream in = new FileInputStream(encryptedFile);
+            FileOutputStream out = new FileOutputStream(decryptedFile)) {
             huaweiCrypto.decrypt(in, out);
         }
-        // 解密
+        assertTrue(encryptedFile.length() > 0);
+        assertTrue(decryptedFile.length() > 0);
     }
 
     @Test
@@ -88,16 +100,20 @@ public class FileEncryptTest {
             Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.BIT_256_FILE_PATH)));
         HuaweiCrypto huaweiCrypto = new HuaweiCrypto(huaweiConfig).withKeyring(keyring);
         Map<String, String> map = CommonUtils.getEncryptoMap();
+        File encryptedFile = File.createTempFile("test", ".encrypted.txt");
+        File decryptedFile = File.createTempFile("test", ".decrypted.txt");
+        encryptedFile.deleteOnExit();
+        decryptedFile.deleteOnExit();
         try (FileInputStream fileInputStream = new FileInputStream(FilePathForExampleConstants.TEST_PPT_FILE_PATH);
-            FileOutputStream fileOutputStream = new FileOutputStream(
-                FilePathForExampleConstants.ENCRYPTED_TXT_FILE_PATH)) {
+            FileOutputStream fileOutputStream = new FileOutputStream(encryptedFile)) {
             huaweiCrypto.encrypt(fileInputStream, fileOutputStream, map);
         }
-        try (FileInputStream in = new FileInputStream(FilePathForExampleConstants.ENCRYPTED_TXT_FILE_PATH);
-            FileOutputStream out = new FileOutputStream(FilePathForExampleConstants.DECRYPTED_TXT_FILE_PATH)) {
-            // 解密
+        try (FileInputStream in = new FileInputStream(encryptedFile);
+            FileOutputStream out = new FileOutputStream(decryptedFile)) {
             huaweiCrypto.decrypt(in, out);
         }
+        assertTrue(encryptedFile.length() > 0);
+        assertTrue(decryptedFile.length() > 0);
     }
 
     @Test
@@ -116,29 +132,36 @@ public class FileEncryptTest {
         cacheCryptoMeterialManager.setSurvivalTime(10000);
         huaweiCrypto.withCryptoMeterialManager(cacheCryptoMeterialManager);
         Map<String, String> map = CommonUtils.getEncryptoMap();
+        File encryptedFile = File.createTempFile("test", ".encrypted.txt");
+        File decryptedFile = File.createTempFile("test", ".decrypted.txt");
+        File encryptedCacheFile = File.createTempFile("test", ".encrypted.Cache.txt");
+        File decryptedCacheFile = File.createTempFile("test", ".decrypted.Cache.txt");
+        encryptedFile.deleteOnExit();
+        decryptedFile.deleteOnExit();
+        encryptedCacheFile.deleteOnExit();
+        decryptedCacheFile.deleteOnExit();
         try (FileInputStream fileInputStream = new FileInputStream(FilePathForExampleConstants.TEST_PPT_FILE_PATH);
-            FileOutputStream fileOutputStream = new FileOutputStream(
-                FilePathForExampleConstants.ENCRYPTED_TXT_FILE_PATH)) {
+            FileOutputStream fileOutputStream = new FileOutputStream(encryptedFile)) {
             huaweiCrypto.encrypt(fileInputStream, fileOutputStream, map);
         }
-        try (FileInputStream in = new FileInputStream(FilePathForExampleConstants.ENCRYPTED_TXT_FILE_PATH);
-            FileOutputStream out = new FileOutputStream(FilePathForExampleConstants.DECRYPTED_TXT_FILE_PATH)) {
-            // 第一次解密
+        try (FileInputStream in = new FileInputStream(encryptedFile);
+            FileOutputStream out = new FileOutputStream(decryptedFile)) {
             huaweiCrypto.decrypt(in, out);
         }
         try (
-            // 通过缓存加解密
             FileInputStream fileInputStreamCache = new FileInputStream(FilePathForExampleConstants.TEST_PPT_FILE_PATH);
-            FileOutputStream fileOutputStreamCache = new FileOutputStream(
-                FilePathForExampleConstants.ENCRYPTED_CACHE_TXT_FILE_PATH)) {
+            FileOutputStream fileOutputStreamCache = new FileOutputStream(encryptedCacheFile)) {
             huaweiCrypto.encrypt(fileInputStreamCache, fileOutputStreamCache, map);
 
         }
-        try (FileInputStream inCache = new FileInputStream(FilePathForExampleConstants.ENCRYPTED_CACHE_TXT_FILE_PATH);
-            FileOutputStream outCache = new FileOutputStream(
-                FilePathForExampleConstants.DECRYPTED_CACHE_TXT_FILE_PATH)) {
+        try (FileInputStream inCache = new FileInputStream(encryptedCacheFile);
+            FileOutputStream outCache = new FileOutputStream(decryptedCacheFile)) {
             huaweiCrypto.decrypt(inCache, outCache);
         }
+        assertTrue(encryptedFile.length() > 0);
+        assertTrue(decryptedFile.length() > 0);
+        assertTrue(encryptedCacheFile.length() > 0);
+        assertTrue(decryptedCacheFile.length() > 0);
     }
 
     /**

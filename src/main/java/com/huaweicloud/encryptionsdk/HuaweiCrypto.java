@@ -1,5 +1,6 @@
 package com.huaweicloud.encryptionsdk;
 
+import com.huaweicloud.encryptionsdk.common.EcsMetadataService;
 import com.huaweicloud.encryptionsdk.exception.ErrorMessage;
 import com.huaweicloud.encryptionsdk.exception.HuaweicloudException;
 import com.huaweicloud.encryptionsdk.exception.KeyringNotFoundException;
@@ -7,15 +8,20 @@ import com.huaweicloud.encryptionsdk.handler.CryptoHadler;
 import com.huaweicloud.encryptionsdk.handler.DefaultCryptoHandler;
 import com.huaweicloud.encryptionsdk.keyrings.Keyring;
 import com.huaweicloud.encryptionsdk.keyrings.kmskeyring.KMSKeyring;
+import com.huaweicloud.encryptionsdk.log.LogReporterManager;
 import com.huaweicloud.encryptionsdk.meterialmanager.CacheCryptoMeterialManager;
 import com.huaweicloud.encryptionsdk.meterialmanager.CryptoMeterialManager;
 import com.huaweicloud.encryptionsdk.meterialmanager.DefaultCryptoMeterialsManager;
 import com.huaweicloud.encryptionsdk.model.CryptoResult;
 import com.huaweicloud.encryptionsdk.model.DataKeyMaterials;
+import com.huaweicloud.encryptionsdk.model.enums.AccessPointType;
 import com.huaweicloud.encryptionsdk.model.enums.CryptoAlgorithm;
 import com.huaweicloud.encryptionsdk.model.request.EncryptRequest;
 import org.apache.commons.codec.DecoderException;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -33,6 +39,8 @@ public class HuaweiCrypto {
 
     private Keyring keyring;
 
+    private LogReporterManager logReporterManager;
+
     public HuaweiCrypto(HuaweiConfig huaweiConfig) {
         this.huaweiConfig = huaweiConfig;
         huaweiConfig.setCryptoAlgorithm(huaweiConfig.getCryptoAlgorithm() == null
@@ -40,6 +48,18 @@ public class HuaweiCrypto {
             : huaweiConfig.getCryptoAlgorithm());
         this.cryptoHandler = new DefaultCryptoHandler();
         this.cryptoMeterialManager = new DefaultCryptoMeterialsManager(huaweiConfig);
+        this.logReporterManager = new LogReporterManager();
+
+        if (huaweiConfig.getLogConfig() != null || huaweiConfig.isLocalLogOnly()) {
+            logReporterManager.init(huaweiConfig);
+        }
+    }
+
+    /**
+     * 关闭日志上报管理器，释放LTS生产者资源。使用完毕后应调用此方法。
+     */
+    public void close() {
+        logReporterManager.shutdown();
     }
 
     public HuaweiCrypto withCryptoMeterialManager(CryptoMeterialManager cryptoMeterialManager) {
@@ -70,6 +90,8 @@ public class HuaweiCrypto {
             dataKeyMaterials = new DataKeyMaterials();
             dataKeyMaterials.setEncryptionContexts(request.getEncryptionContext());
             dataKeyMaterials.setCryptoAlgorithm(huaweiConfig.getCryptoAlgorithm());
+            dataKeyMaterials.setPolicyId(request.getPolicyId());
+            dataKeyMaterials.setKeyPolicy(request.getKeyPolicy());
             if (cryptoMeterialManager instanceof CacheCryptoMeterialManager
                 && ((CacheCryptoMeterialManager) cryptoMeterialManager).getMaxByteLimit()
                 < request.getPlainText().length) {
@@ -77,7 +99,30 @@ public class HuaweiCrypto {
             }
             dataKeyMaterials = cryptoMeterialManager.getMaterialsForEncrypt(keyring, dataKeyMaterials,
                 request.getPlainText().length);
-            return cryptoHandler.encrypt(request, dataKeyMaterials);
+            CryptoResult<byte[]> result = cryptoHandler.encrypt(request, dataKeyMaterials);
+
+            if (huaweiConfig.getLogConfig() != null || huaweiConfig.isLocalLogOnly()) {
+                if (dataKeyMaterials.getKeyCapsule() != null) {
+                    String keyId = dataKeyMaterials.getKeyCapsule().getKeyId();
+                    Long encryptDataBytes = (long) request.getPlainText().length;
+                    Long encryptOutputBytes = result.getDataLength();
+                    String accessPointType = AccessPointType.getDisplayNameByCode(dataKeyMaterials.getKeyCapsule().getAccessPointType());
+                    String instanceId = dataKeyMaterials.getKeyCapsule().getAccessPointType() == AccessPointType.ECS.getCode()
+                        ? EcsMetadataService.getEcsInstanceId() : null;
+
+                    logReporterManager.recordEncryptLog(
+                        null,
+                        encryptDataBytes,
+                        null,
+                        encryptOutputBytes,
+                        keyId,
+                        accessPointType,
+                        instanceId
+                    );
+                }
+            }
+
+            return result;
         } catch (Exception e) {
             throw new HuaweicloudException(ErrorMessage.CIPHER_EXCEPTION.getMessage(), e);
 
@@ -92,7 +137,29 @@ public class HuaweiCrypto {
         DataKeyMaterials dataKeyMaterials = null;
         try {
             dataKeyMaterials = cryptoMeterialManager.getMaterialsForDecrypt(keyring, cipherText);
-            return cryptoHandler.decrypt(cipherText, dataKeyMaterials);
+            CryptoResult<byte[]> result = cryptoHandler.decrypt(cipherText, dataKeyMaterials);
+
+            if (huaweiConfig.getLogConfig() != null || huaweiConfig.isLocalLogOnly()) {
+                if (dataKeyMaterials.getKeyCapsule() != null) {
+                    String keyId = dataKeyMaterials.getKeyCapsule().getKeyId();
+                    Long decryptDataBytes = (long) cipherText.length;
+                    Long decryptOutputBytes = result.getResult() != null ? (long) result.getResult().length : 0L;
+                    String accessPointType = AccessPointType.getDisplayNameByCode(dataKeyMaterials.getKeyCapsule().getAccessPointType());
+                    String instanceId = dataKeyMaterials.getKeyCapsule().getInstanceId();
+
+                    logReporterManager.recordDecryptLog(
+                        null,
+                        decryptDataBytes,
+                        null,
+                        decryptOutputBytes,
+                        keyId,
+                        accessPointType,
+                        instanceId
+                    );
+                }
+            }
+
+            return result;
         } catch (Exception e) {
             throw new HuaweicloudException(ErrorMessage.DECRYPT_EXCEPTION.getMessage(), e);
         }
@@ -106,17 +173,37 @@ public class HuaweiCrypto {
 
         DataKeyMaterials dataKeyMaterials = null;
         try {
+            long encryptDataBytes = inputStream.available();
             dataKeyMaterials = new DataKeyMaterials();
             dataKeyMaterials.setEncryptionContexts(
                 encryptionContext == null ? Collections.emptyMap() : encryptionContext);
             dataKeyMaterials.setCryptoAlgorithm(huaweiConfig.getCryptoAlgorithm());
             if (cryptoMeterialManager instanceof CacheCryptoMeterialManager
-                && ((CacheCryptoMeterialManager) cryptoMeterialManager).getMaxByteLimit() < inputStream.available()) {
+                && ((CacheCryptoMeterialManager) cryptoMeterialManager).getMaxByteLimit() < encryptDataBytes) {
                 throw new HuaweicloudException(ErrorMessage.DATA_EXCEED_LIMIT.getMessage());
             }
-            dataKeyMaterials = cryptoMeterialManager.getMaterialsForEncrypt(keyring, dataKeyMaterials,
-                inputStream.available());
-            return cryptoHandler.encrypt(inputStream, outputStream, dataKeyMaterials, encryptionContext);
+            dataKeyMaterials = cryptoMeterialManager.getMaterialsForEncrypt(keyring, dataKeyMaterials, encryptDataBytes);
+            CryptoResult<OutputStream> cryptoResult = cryptoHandler.encrypt(inputStream, outputStream, dataKeyMaterials, encryptionContext);
+
+            if (huaweiConfig.getLogConfig() != null || huaweiConfig.isLocalLogOnly()) {
+                if (dataKeyMaterials.getKeyCapsule() != null) {
+                    String keyId = dataKeyMaterials.getKeyCapsule().getKeyId();
+                    String accessPointType = AccessPointType.getDisplayNameByCode(dataKeyMaterials.getKeyCapsule().getAccessPointType());
+                    String instanceId = dataKeyMaterials.getKeyCapsule().getAccessPointType() == AccessPointType.ECS.getCode()
+                        ? EcsMetadataService.getEcsInstanceId() : null;
+
+                    logReporterManager.recordEncryptLog(
+                        null,
+                        encryptDataBytes,
+                        null,
+                        cryptoResult.getDataLength(),
+                        keyId,
+                        accessPointType,
+                        instanceId
+                    );
+                }
+            }
+            return cryptoResult;
         } catch (Exception e) {
             throw new HuaweicloudException(ErrorMessage.CIPHER_EXCEPTION.getMessage(), e);
         }
@@ -128,11 +215,117 @@ public class HuaweiCrypto {
         }
         DataKeyMaterials dataKeyMaterials = null;
         try {
+            long decryptDataBytes = inputStream.available();
             dataKeyMaterials = cryptoMeterialManager.getMaterialsForStreamDecrypt(keyring, inputStream);
-            return cryptoHandler.decrypt(inputStream, outputStream, dataKeyMaterials);
+            CryptoResult<OutputStream> cryptoResult = cryptoHandler.decrypt(inputStream, outputStream, dataKeyMaterials);
+
+            if (huaweiConfig.getLogConfig() != null || huaweiConfig.isLocalLogOnly()) {
+                if (dataKeyMaterials.getKeyCapsule() != null) {
+                    String keyId = dataKeyMaterials.getKeyCapsule().getKeyId();
+                    String accessPointType = AccessPointType.getDisplayNameByCode(dataKeyMaterials.getKeyCapsule().getAccessPointType());
+                    String instanceId = dataKeyMaterials.getKeyCapsule().getInstanceId();
+
+                    logReporterManager.recordDecryptLog(
+                        null,
+                        decryptDataBytes,
+                        null,
+                        null,
+                        keyId,
+                        accessPointType,
+                        instanceId
+                    );
+                }
+            }
+            return cryptoResult;
         } catch (Exception e) {
             throw new HuaweicloudException(ErrorMessage.DECRYPT_EXCEPTION.getMessage(), e);
         }
     }
 
+    public CryptoResult<OutputStream> encrypt(String sourceFilePath, String targetFilePath,
+                                              Map<String, String> encryptionContext) {
+        if (keyring == null) {
+            throw new KeyringNotFoundException(ErrorMessage.KEYRING_NULL_EXCEPTION.getMessage());
+        }
+
+        DataKeyMaterials dataKeyMaterials = null;
+        File inputFile = new File(sourceFilePath);
+        File outputFile = new File(targetFilePath);
+        try (FileInputStream fileInputStream = new FileInputStream(inputFile);
+             FileOutputStream fileOutputStream = new FileOutputStream(outputFile)) {
+            long encryptDataBytes = fileInputStream.available();
+            dataKeyMaterials = new DataKeyMaterials();
+            dataKeyMaterials.setEncryptionContexts(
+                    encryptionContext == null ? Collections.emptyMap() : encryptionContext);
+            dataKeyMaterials.setCryptoAlgorithm(huaweiConfig.getCryptoAlgorithm());
+            if (cryptoMeterialManager instanceof CacheCryptoMeterialManager
+                    && ((CacheCryptoMeterialManager) cryptoMeterialManager).getMaxByteLimit() < encryptDataBytes) {
+                throw new HuaweicloudException(ErrorMessage.DATA_EXCEED_LIMIT.getMessage());
+            }
+            dataKeyMaterials = cryptoMeterialManager.getMaterialsForEncrypt(keyring, dataKeyMaterials, encryptDataBytes);
+            CryptoResult<OutputStream> cryptoResult = cryptoHandler.encrypt(fileInputStream, fileOutputStream, dataKeyMaterials, encryptionContext);
+
+            if (huaweiConfig.getLogConfig() != null || huaweiConfig.isLocalLogOnly()) {
+                if (dataKeyMaterials.getKeyCapsule() != null) {
+                    String keyId = dataKeyMaterials.getKeyCapsule().getKeyId();
+                    String accessPointType = AccessPointType.getDisplayNameByCode(dataKeyMaterials.getKeyCapsule().getAccessPointType());
+                    String instanceId = dataKeyMaterials.getKeyCapsule().getAccessPointType() == AccessPointType.ECS.getCode()
+                        ? EcsMetadataService.getEcsInstanceId() : null;
+
+                    logReporterManager.recordEncryptLog(
+                            inputFile.getName(),
+                            encryptDataBytes,
+                            outputFile.getName(),
+                            outputFile.length(),
+                            keyId,
+                            accessPointType,
+                            instanceId
+                    );
+                }
+            }
+            return cryptoResult;
+        } catch (Exception e) {
+            throw new HuaweicloudException(ErrorMessage.CIPHER_EXCEPTION.getMessage(), e);
+        }
+    }
+
+    public CryptoResult<OutputStream> decrypt(String sourceFilePath, String targetFilePath) {
+        if (keyring == null) {
+            throw new KeyringNotFoundException(ErrorMessage.KEYRING_NULL_EXCEPTION.getMessage());
+        }
+        DataKeyMaterials dataKeyMaterials = null;
+        File inputFile = new File(sourceFilePath);
+        File outputFile = new File(targetFilePath);
+        try (FileInputStream fileInputStream = new FileInputStream(inputFile);
+             FileOutputStream fileOutputStream = new FileOutputStream(outputFile)) {
+            long decryptDataBytes = fileInputStream.available();
+            dataKeyMaterials = cryptoMeterialManager.getMaterialsForStreamDecrypt(keyring, fileInputStream);
+            CryptoResult<OutputStream> cryptoResult = cryptoHandler.decrypt(fileInputStream, fileOutputStream, dataKeyMaterials);
+
+            if (huaweiConfig.getLogConfig() != null || huaweiConfig.isLocalLogOnly()) {
+                if (dataKeyMaterials.getKeyCapsule() != null) {
+                    String keyId = dataKeyMaterials.getKeyCapsule().getKeyId();
+                    String accessPointType = AccessPointType.getDisplayNameByCode(dataKeyMaterials.getKeyCapsule().getAccessPointType());
+                    String instanceId = dataKeyMaterials.getKeyCapsule().getInstanceId();
+
+                    logReporterManager.recordDecryptLog(
+                            inputFile.getName(),
+                            decryptDataBytes,
+                            outputFile.getName(),
+                            outputFile.length(),
+                            keyId,
+                            accessPointType,
+                            instanceId
+                    );
+                }
+            }
+            return cryptoResult;
+        } catch (Exception e) {
+            throw new HuaweicloudException(ErrorMessage.DECRYPT_EXCEPTION.getMessage(), e);
+        }
+    }
+
+    LogReporterManager getLogReporterManager() {
+        return logReporterManager;
+    }
 }

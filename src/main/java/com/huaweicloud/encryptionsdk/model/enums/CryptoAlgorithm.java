@@ -13,20 +13,20 @@ public enum CryptoAlgorithm {
     /**
      * AES/GCM/NoPadding 128
      */
-    AES_128_GCM_NOPADDING("AES_128", "AES/GCM/NoPadding", 16, 12, 16, 16, (short) 1, (byte) 1),
+    AES_128_GCM_NOPADDING("AES_128", "AES/GCM/NoPadding", 16, 12, 16, 16, (short) 1, (byte) 1, "AES", 128),
     /**
      * AES/GCM/NoPadding 256
      */
-    AES_256_GCM_NOPADDING("AES_256", "AES/GCM/NoPadding", 32, 12, 16, 16, (short) 2, (byte) 1),
+    AES_256_GCM_NOPADDING("AES_256", "AES/GCM/NoPadding", 32, 12, 16, 16, (short) 2, (byte) 1, "AES", 256),
 
     /**
      * SM4/GCM/NoPadding 128
      */
-    SM4_128_GCM_NOPADDING("SM4_128", "SM4/GCM/NoPadding", 16, 12, 16, 16, (short) 3, (byte) 1),
+    SM4_128_GCM_NOPADDING("SM4_128", "SM4/GCM/NoPadding", 16, 12, 16, 16, (short) 3, (byte) 1, "SM4", 128),
     /**
      * SM4/CBC/Padding 128
      */
-    SM4_128_CBC_PADDING("SM4_128", "SM4/CBC/PKCS5Padding", 16, 16, 16, 16, (short) 4, (byte) 1),
+    SM4_128_CBC_PADDING("SM4_128", "SM4/CBC/PKCS5Padding", 16, 16, 16, 16, (short) 4, (byte) 1, "SM4", 128),
     ;
 
     private byte version;
@@ -45,8 +45,12 @@ public enum CryptoAlgorithm {
 
     private short value;
 
+    private String secKeyAlgorithm;
+
+    private int datakeyLength;
+
     CryptoAlgorithm(String keySpec, String cryptoAlg, int keyLen, int ivLen, int tagLen, int blockSize, short value,
-        byte version) {
+        byte version, String secKeyAlgorithm, int datakeyLength) {
         this.keySpec = keySpec;
         this.cryptoAlg = cryptoAlg;
         this.keyLen = keyLen;
@@ -55,6 +59,8 @@ public enum CryptoAlgorithm {
         this.blockSize = blockSize;
         this.value = value;
         this.version = version;
+        this.secKeyAlgorithm = secKeyAlgorithm;
+        this.datakeyLength = datakeyLength;
     }
 
     public static CryptoAlgorithm getAlgorithm(int algorithmValue) {
@@ -132,6 +138,14 @@ public enum CryptoAlgorithm {
 
     public void setValue(short value) {
         this.value = value;
+    }
+
+    public String getSecKeyAlgorithm() {
+        return secKeyAlgorithm;
+    }
+
+    public int getDatakeyLength() {
+        return datakeyLength;
     }
 
     public String getCryptoMode() {
