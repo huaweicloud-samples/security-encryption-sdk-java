@@ -145,7 +145,7 @@ public class KmsDiscoveryEncryptionExample {
         // 8. 加密数据
         huaweiCrypto.encrypt(originFilePath, targetEncryptFilePath, map);
 
-        LOGGER.info("文件加密完成，源文件：{}, 加密后文件：{}", originFilePath, targetEncryptFilePath);
+        LOGGER.info("The file encryption is complete. Origin file: {}; Encrypted file: {}.", originFilePath, targetEncryptFilePath);
 
         // 9. 构建 KMS discovery 解密 SDK（无需再传递 keyId，regionId，projectId 等信息）
         HuaweiConfig huaweiConfigDiscovery = HuaweiConfig.builder().sk(sk).ak(ak).build();
@@ -155,7 +155,7 @@ public class KmsDiscoveryEncryptionExample {
         // 10. 解密数据
         huaweiCryptoDecrypt.decrypt(targetEncryptFilePath, targetDecryptFilePath);
 
-        LOGGER.info("文件解密完成，加密文件：{}, 解密后文件：{}", targetEncryptFilePath, targetDecryptFilePath);
+        LOGGER.info("The file decryption is complete. Encrypted file: {}; Decrypted file: {}.", targetEncryptFilePath, targetDecryptFilePath);
 
         // 11. 验证解密后的数据是否和原始纯文本字符串一致
         Validate.isTrue(compareFile(originFilePath, targetDecryptFilePath));

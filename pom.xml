@@ -4,7 +4,7 @@
 
     <groupId>com.huaweicloud.sdk</groupId>
     <artifactId>huaweicloud-encryption-sdk-java</artifactId>
-    <version>1.1.9</version>
+    <version>1.2.0</version>
     <packaging>jar</packaging>
 
     <name>huaweicloud-encryption-sdk-java</name>
