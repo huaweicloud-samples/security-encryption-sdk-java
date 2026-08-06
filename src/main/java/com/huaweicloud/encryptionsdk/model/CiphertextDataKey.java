@@ -17,7 +17,7 @@ import java.util.Optional;
  */
 public class CiphertextDataKey {
 
-    private byte keyProviderLength;
+    private int keyProviderLength;
 
     /**
      * 标识符，用来区别数据密钥生成类型
@@ -28,7 +28,7 @@ public class CiphertextDataKey {
 
     private short dataKeyLength;
 
-    private byte keyInformationLength;
+    private int keyInformationLength;
 
     private byte[] keyInformation = new byte[0];
 
@@ -52,10 +52,10 @@ public class CiphertextDataKey {
         this.dataKey = dataKey;
         this.dataKeyLength = (short) dataKey.length;
         this.keyProvider = KeyProviderEnum.LOCAL_PROVIDER.getName().getBytes(StandardCharsets.UTF_8);
-        this.keyProviderLength = (byte) keyProvider.length;
+        this.keyProviderLength = keyProvider.length;
         this.discovery = Discovery.NO_DISCOVERY;
         this.keyInformation = buildKeyInformation(Discovery.NO_DISCOVERY);
-        this.keyInformationLength = (byte) keyInformation.length;
+        this.keyInformationLength = keyInformation.length;
 
         /**
          * 总长度包括各类信息数组的长度和长度数字对应的字节数，
@@ -75,20 +75,20 @@ public class CiphertextDataKey {
         this.dataKeyLength = (short) dataKey.length;
         if (kmsConfig == null) {
             this.keyProvider = KeyProviderEnum.KMS_PROVIDER.getName().getBytes(StandardCharsets.UTF_8);
-            this.keyProviderLength = (byte) keyProvider.length;
+            this.keyProviderLength = keyProvider.length;
             this.discovery = Discovery.NO_DISCOVERY;
             this.keyInformation = buildKeyInformation(Discovery.NO_DISCOVERY);
-            this.keyInformationLength = (byte) keyInformation.length;
+            this.keyInformationLength = keyInformation.length;
         } else {
             this.keyId = Optional.ofNullable(kmsConfig.getKeyId()).orElse("").getBytes(StandardCharsets.UTF_8);
             this.region = Optional.ofNullable(kmsConfig.getRegion()).orElse("").getBytes(StandardCharsets.UTF_8);
             this.projectId = Optional.ofNullable(kmsConfig.getProjectId()).orElse("").getBytes(StandardCharsets.UTF_8);
             this.endPoint = Optional.ofNullable(kmsConfig.getEndPoint()).orElse("").getBytes(StandardCharsets.UTF_8);
             this.keyProvider = KeyProviderEnum.KMS_PROVIDER.getName().getBytes(StandardCharsets.UTF_8);
-            this.keyProviderLength = (byte) keyProvider.length;
+            this.keyProviderLength = keyProvider.length;
             this.discovery = Discovery.DISCOVERY;
             this.keyInformation = buildKeyInformation(Discovery.DISCOVERY);
-            this.keyInformationLength = (byte) keyInformation.length;
+            this.keyInformationLength = keyInformation.length;
         }
 
         /**
@@ -142,9 +142,9 @@ public class CiphertextDataKey {
 
     public byte[] toByteArray() {
         ByteBuffer buffer = ByteBuffer.allocate(this.totalLength);
-        buffer.put(keyProviderLength);
+        buffer.put((byte) keyProviderLength);
         buffer.put(keyProvider);
-        buffer.put(keyInformationLength);
+        buffer.put((byte) keyInformationLength);
         buffer.put(keyInformation);
         buffer.putShort(dataKeyLength);
         buffer.put(dataKey);
@@ -152,13 +152,13 @@ public class CiphertextDataKey {
     }
 
     public void byteArrayToBean(DataInputStream dataStream) throws IOException {
-        keyProviderLength = dataStream.readByte();
+        keyProviderLength = dataStream.readByte() & 0xFF;
         this.keyProvider = new byte[keyProviderLength];
         int read = dataStream.read(keyProvider);
         if (read != keyProvider.length) {
             throw new HuaweicloudException(ErrorMessage.SOURCE_FILE_INVALID.getMessage());
         }
-        keyInformationLength = dataStream.readByte();
+        keyInformationLength = dataStream.readByte() & 0xFF;
         if (keyInformationLength > 0) {
             this.keyInformation = new byte[keyInformationLength];
             int readKeyInfo = dataStream.read(keyInformation);
@@ -196,7 +196,7 @@ public class CiphertextDataKey {
     }
 
     private byte[] readField(DataInputStream dataStream) throws IOException {
-        byte len = dataStream.readByte();
+        int len = dataStream.readByte() & 0xFF;
         byte[] bytes = new byte[len];
         int read = dataStream.read(bytes);
         if (read != bytes.length) {

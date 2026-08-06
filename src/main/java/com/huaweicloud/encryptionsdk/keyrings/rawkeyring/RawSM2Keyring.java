@@ -1,5 +1,6 @@
 package com.huaweicloud.encryptionsdk.keyrings.rawkeyring;
 
+import com.huaweicloud.encryptionsdk.common.ProviderManager;
 import com.huaweicloud.encryptionsdk.common.Utils;
 import com.huaweicloud.encryptionsdk.exception.EncryptException;
 import com.huaweicloud.encryptionsdk.exception.ErrorMessage;
@@ -21,6 +22,11 @@ import org.slf4j.LoggerFactory;
 
 import javax.crypto.SecretKey;
 import java.math.BigInteger;
+import java.security.KeyFactory;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.List;
 
 /**
@@ -51,7 +57,7 @@ public class RawSM2Keyring extends RawKeyring {
     public boolean realDecrypt(byte[] bytes, CiphertextDataKey ciphertextDataKey, DataKeyMaterials dataKeyMaterials) {
         try {
             ECPrivateKeyParameters privateKeyParameters = getPrivateKeyParameters(
-                (ECPrivateKey) Utils.getPrivateKey(bytes, KEY_ALGORITHM));
+                (ECPrivateKey) parsePrivateKeyWithBc(bytes));
             SM2Engine sm2Engine = new SM2Engine();
             sm2Engine.init(false, privateKeyParameters);
             byte[] dataKey = sm2Engine.processBlock(ciphertextDataKey.getDataKey(), 0,
@@ -66,7 +72,7 @@ public class RawSM2Keyring extends RawKeyring {
     }
 
     private ECPublicKeyParameters getPublicKeyParam(byte[] bytes) {
-        ECPublicKey publicKey = (ECPublicKey) Utils.getPublicKey(bytes, KEY_ALGORITHM);
+        ECPublicKey publicKey = (ECPublicKey) parsePublicKeyWithBc(bytes);
         ECParameterSpec parameterSpec = publicKey.getParameters();
         ECDomainParameters domainParams = new ECDomainParameters(parameterSpec.getCurve(), parameterSpec.getG(),
             parameterSpec.getN(), parameterSpec.getH());
@@ -81,6 +87,32 @@ public class RawSM2Keyring extends RawKeyring {
         BigInteger h = parameterSpec.getH();
         ECDomainParameters domainParams = new ECDomainParameters(curve, g, n, h);
         return new ECPrivateKeyParameters(privateKey.getD(), domainParams);
+    }
+
+    /**
+     * 使用 BC provider 解析公钥, 确保返回 BC 的 ECPublicKey 实现
+     */
+    private static PublicKey parsePublicKeyWithBc(byte[] keyBytes) {
+        try {
+            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
+            KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM, ProviderManager.getBcProvider());
+            return keyFactory.generatePublic(keySpec);
+        } catch (Exception e) {
+            throw new EncryptException(ErrorMessage.PUBLIC_KEY_PARSE_EXCEPTION.getMessage(), e);
+        }
+    }
+
+    /**
+     * 使用 BC provider 解析私钥, 确保返回 BC 的 ECPrivateKey 实现
+     */
+    private static PrivateKey parsePrivateKeyWithBc(byte[] keyBytes) {
+        try {
+            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
+            KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM, ProviderManager.getBcProvider());
+            return keyFactory.generatePrivate(keySpec);
+        } catch (Exception e) {
+            throw new EncryptException(ErrorMessage.PRIVATE_KEY_PARSE_EXCEPTION.getMessage(), e);
+        }
     }
 
     @Override

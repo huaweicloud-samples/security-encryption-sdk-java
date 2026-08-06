@@ -39,8 +39,6 @@ public class RawRSAKeyringTest {
         sm2.setPrivateKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.RSA_PRI_FILE_PATH)));
         sm2.setPublicKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.RSA_PUB_FILE_PATH)));
         sm2.encryptDataKey(dataKeyMaterials);
-        System.out.println(
-            Base64.getEncoder().encodeToString(dataKeyMaterials.getCiphertextDataKeys().get(0).getDataKey()));
         dataKeyMaterials.setPlaintextDataKey(null);
         sm2.decryptDataKey(dataKeyMaterials);
         SecretKey plaintextDataKey = dataKeyMaterials.getPlaintextDataKey();

@@ -7,7 +7,10 @@ import com.huaweicloud.encryptionsdk.keyrings.KmsKeyringFactory;
 import com.huaweicloud.encryptionsdk.keyrings.kmskeyring.KMSKeyring;
 import com.huaweicloud.encryptionsdk.log.LogConfig;
 import com.huaweicloud.encryptionsdk.meterialmanager.CacheCryptoMeterialManager;
-import com.huaweicloud.encryptionsdk.model.*;
+import com.huaweicloud.encryptionsdk.model.AccessPointConfig;
+import com.huaweicloud.encryptionsdk.model.CryptoResult;
+import com.huaweicloud.encryptionsdk.model.KMSConfig;
+import com.huaweicloud.encryptionsdk.model.KeyCapsuleConfig;
 import com.huaweicloud.encryptionsdk.model.enums.CryptoAlgorithm;
 import com.huaweicloud.encryptionsdk.model.enums.KeyringTypeEnum;
 import com.huaweicloud.encryptionsdk.model.request.EncryptRequest;
@@ -136,7 +139,7 @@ public class KeyCapsuleEncryptionExample {
         KMSKeyring keyring = new KmsKeyringFactory().getKeyring(KeyringTypeEnum.KMS_KEY_CAPSULE.getType());
 
         // 8. 使用上述配置及密钥环信息初始化加密 SDK
-        HuaweiCrypto crypto = new HuaweiCrypto(config).withKeyring(keyring);
+        HuaweiCrypto encryptCrypto = new HuaweiCrypto(config).withKeyring(keyring);
 
         // 9. 创建本地数据密钥缓存对象（可选）
         LocalDataKeyCache localDataKeyCache = new LocalDataKeyCache();
@@ -150,7 +153,7 @@ public class KeyCapsuleEncryptionExample {
         cacheCryptoMeterialManager.setMaxMessageLimit(1000);
         // 数据密钥缓存存活时间，单位为ms，默认为1000s
         cacheCryptoMeterialManager.setSurvivalTime(5000);
-        crypto.withCryptoMeterialManager(cacheCryptoMeterialManager);
+        encryptCrypto.withCryptoMeterialManager(cacheCryptoMeterialManager);
 
         // 10. 加密数据
         EncryptRequest encryptRequest = new EncryptRequest();
@@ -162,7 +165,7 @@ public class KeyCapsuleEncryptionExample {
         String plainText = "Hello, Key Capsule!";
         encryptRequest.setPlainText(plainText.getBytes(StandardCharsets.UTF_8));
         // 执行加密
-        CryptoResult<byte[]> result = crypto.encrypt(encryptRequest);
+        CryptoResult<byte[]> result = encryptCrypto.encrypt(encryptRequest);
 
         // 11. 构建 KMS keyCapsule 解密 SDK（无需再传递 kmsConfigList 等信息）
         HuaweiConfig huaweiConfigDecrypt = HuaweiConfig.builder()
@@ -174,12 +177,16 @@ public class KeyCapsuleEncryptionExample {
                 .logConfig(logConfig)
                 .build();
         KMSKeyring keyCapsuleKeyring = new KmsKeyringFactory().getKeyring(KeyringTypeEnum.KMS_KEY_CAPSULE.getType());
-        HuaweiCrypto huaweiCryptoDecrypt = new HuaweiCrypto(huaweiConfigDecrypt).withKeyring(keyCapsuleKeyring);
+        HuaweiCrypto decryptCrypto = new HuaweiCrypto(huaweiConfigDecrypt).withKeyring(keyCapsuleKeyring);
 
         // 12. 解密数据
-        CryptoResult<byte[]> decrypt = huaweiCryptoDecrypt.decrypt(result.getResult());
+        CryptoResult<byte[]> decrypt = decryptCrypto.decrypt(result.getResult());
 
         // 13. 验证解密后的数据是否和原始纯文本字符串一致
         Validate.isTrue(Arrays.equals(plainText.getBytes(StandardCharsets.UTF_8), decrypt.getResult()));
+
+        // 14.关闭HuaweiCrypto
+        encryptCrypto.close();
+        decryptCrypto.close();
     }
 }

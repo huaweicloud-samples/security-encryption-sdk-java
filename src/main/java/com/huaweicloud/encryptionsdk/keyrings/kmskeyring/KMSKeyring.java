@@ -25,6 +25,7 @@ import com.huaweicloud.sdk.kms.v2.model.OperateKeyRequestBody;
 import com.huaweicloud.sdk.kms.v2.region.KmsRegion;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,6 +105,9 @@ public abstract class KMSKeyring implements Keyring {
                 BasicCredentials auth = new BasicCredentials().withAk(huaweiConfig.getAk())
                     .withSk(huaweiConfig.getSk())
                     .withProjectId(kmsConfig.getProjectId());
+                if (StringUtils.isNotEmpty(huaweiConfig.getSecurityToken())) {
+                    auth = auth.withSecurityToken(huaweiConfig.getSecurityToken());
+                }
                 EncryptDatakeyResponse response = null;
                 try {
                     response = kmsEncryptDataKey(kmsConfig.getRegion(), kmsConfig.getEndPoint(), kmsConfig.getKeyId(),
@@ -196,6 +200,9 @@ public abstract class KMSKeyring implements Keyring {
             BasicCredentials auth = new BasicCredentials().withAk(huaweiConfig.getAk())
                 .withSk(huaweiConfig.getSk())
                 .withProjectId(kmsConfig.getProjectId());
+            if (StringUtils.isNotEmpty(huaweiConfig.getSecurityToken())) {
+                auth = auth.withSecurityToken(huaweiConfig.getSecurityToken());
+            }
             for (CiphertextDataKey ciphertextDataKey : ciphertextDataKeys) {
                 try {
                     String regionStr = kmsConfig.getRegion();

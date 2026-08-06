@@ -1,4 +1,4 @@
-package com.huaweicloud.encryptionsdk.example;
+package com.huaweicloud.encryptionsdk.examples;
 
 import com.huaweicloud.encryptionsdk.HuaweiConfig;
 import com.huaweicloud.encryptionsdk.HuaweiCrypto;

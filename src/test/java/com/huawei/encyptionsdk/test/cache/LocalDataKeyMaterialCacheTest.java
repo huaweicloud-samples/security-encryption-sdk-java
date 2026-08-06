@@ -72,10 +72,10 @@ public class LocalDataKeyMaterialCacheTest {
         HuaweiConfig huaweiConfig = HuaweiConfig.builder()
             .cryptoAlgorithm(CryptoAlgorithm.SM4_128_GCM_NOPADDING)
             .build();
-        RawKeyring keyring = new RawKeyringFactory().getKeyring(KeyringTypeEnum.RAW_RSA.getType());
-        keyring.setPrivateKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.RSA_PRI_FILE_PATH)));
-        keyring.setPublicKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.RSA_PUB_FILE_PATH)));
-        this.keyring = keyring;
+        RawKeyring tempKeyring = new RawKeyringFactory().getKeyring(KeyringTypeEnum.RAW_RSA.getType());
+        tempKeyring.setPrivateKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.RSA_PRI_FILE_PATH)));
+        tempKeyring.setPublicKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.RSA_PUB_FILE_PATH)));
+        this.keyring = tempKeyring;
         cryptoMeterialManager = new DefaultCryptoMeterialsManager(huaweiConfig);
         encryptionContext.put("encryption", "context");
         encryptionContext.put("simple", "test");

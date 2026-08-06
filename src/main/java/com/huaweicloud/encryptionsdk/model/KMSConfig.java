@@ -38,6 +38,13 @@ public class KMSConfig {
         this.endPoint = null;
     }
 
+    public KMSConfig(String region, String projectId) {
+        this.region = region;
+        this.keyId = null;
+        this.projectId = projectId;
+        this.endPoint = null;
+    }
+
     public String getRegion() {
         return region;
     }

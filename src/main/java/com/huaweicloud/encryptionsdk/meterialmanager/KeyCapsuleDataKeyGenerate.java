@@ -36,10 +36,13 @@ public class KeyCapsuleDataKeyGenerate implements DataKeyGenerate {
     public void dataKeyGenerate(HuaweiConfig huaweiConfig, DataKeyMaterials dataKeyMaterials) {
         KMSConfig kmsConfig = Utils.getCapsuleKMSConfig(huaweiConfig.getKmsConfigList(), huaweiConfig.getKeyCapsuleConfig());
 
-        ICredential auth = new BasicCredentials()
+        BasicCredentials auth = new BasicCredentials()
             .withAk(huaweiConfig.getAk())
             .withSk(huaweiConfig.getSk())
             .withProjectId(kmsConfig.getProjectId());
+        if (StringUtils.isNotEmpty(huaweiConfig.getSecurityToken())) {
+            auth = auth.withSecurityToken(huaweiConfig.getSecurityToken());
+        }
 
         CreateKeyCapsuleResponse response = createKeyCapsuleByKms(dataKeyMaterials, huaweiConfig.getKeyCapsuleConfig(), huaweiConfig, kmsConfig, auth);
         KeyCapsule keyCapsule = parseKeyCapsule(response, huaweiConfig.getKeyCapsuleConfig());
@@ -56,7 +59,7 @@ public class KeyCapsuleDataKeyGenerate implements DataKeyGenerate {
     private CreateKeyCapsuleResponse createKeyCapsuleByKms(
             DataKeyMaterials dataKeyMaterials, KeyCapsuleConfig config, HuaweiConfig huaweiConfig, KMSConfig kmsConfig, ICredential auth) {
         try {
-            KmsHttpClient client = new KmsHttpClient(huaweiConfig.getAk(), huaweiConfig.getSk(), kmsConfig);
+            KmsHttpClient client = new KmsHttpClient(huaweiConfig.getAk(), huaweiConfig.getSk(), huaweiConfig.getSecurityToken(), kmsConfig);
             CreateKeyCapsuleRequest request = buildRequestBody(dataKeyMaterials, config, huaweiConfig, kmsConfig);
             return client.post("/kms/datakey-capsule/create", request, CreateKeyCapsuleResponse.class);
         } catch (Exception e) {

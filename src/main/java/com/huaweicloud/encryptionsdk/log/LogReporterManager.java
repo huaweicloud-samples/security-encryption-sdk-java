@@ -83,6 +83,7 @@ public class LogReporterManager {
             this.ltsProducer = new LTSSDKProducer(
                 config.getAk(),
                 config.getSk(),
+                config.getSecurityToken(),
                 logConfig.getProjectId(),
                 logConfig.getRegion(),
                 logConfig

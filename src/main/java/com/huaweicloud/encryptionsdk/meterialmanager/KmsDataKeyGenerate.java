@@ -16,6 +16,7 @@ import com.huaweicloud.sdk.kms.v2.model.CreateDatakeyRequestBody;
 import com.huaweicloud.sdk.kms.v2.model.CreateDatakeyResponse;
 import com.huaweicloud.sdk.kms.v2.region.KmsRegion;
 import org.apache.commons.codec.DecoderException;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Collections;
@@ -34,9 +35,12 @@ public class KmsDataKeyGenerate implements DataKeyGenerate {
         }
         for (KMSConfig kmsConfig : kmsConfigList) {
             // 只需要创建一个数据密钥即可
-            ICredential auth = new BasicCredentials().withAk(huaweiConfig.getAk())
+            BasicCredentials auth = new BasicCredentials().withAk(huaweiConfig.getAk())
                 .withSk(huaweiConfig.getSk())
                 .withProjectId(kmsConfig.getProjectId());
+            if (StringUtils.isNotEmpty(huaweiConfig.getSecurityToken())) {
+                auth = auth.withSecurityToken(huaweiConfig.getSecurityToken());
+            }
             CreateDatakeyResponse response = createDataKeyByKms(kmsConfig.getRegion(), kmsConfig.getKeyId(),
                 kmsConfig.getEndPoint(), auth, huaweiConfig.getCryptoAlgorithm());
             byte[] plaintBytes;

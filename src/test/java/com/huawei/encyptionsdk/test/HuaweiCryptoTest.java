@@ -20,11 +20,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
@@ -117,12 +117,12 @@ public class HuaweiCryptoTest {
         CryptoHadler handler = Mockito.mock(CryptoHadler.class);
         Mockito.when(mm.getMaterialsForEncrypt(any(Keyring.class), any(DataKeyMaterials.class), anyLong())).thenReturn(m);
         Mockito.when(mm.getMaterialsForStreamDecrypt(any(Keyring.class), any(ByteArrayInputStream.class))).thenReturn(m);
-        Mockito.when(mm.getMaterialsForStreamDecrypt(any(Keyring.class), any(FileInputStream.class))).thenReturn(m);
+        Mockito.when(mm.getMaterialsForStreamDecrypt(any(Keyring.class), any(BufferedInputStream.class))).thenReturn(m);
         CryptoResult<OutputStream> res = new CryptoResult<>(new ByteArrayOutputStream(), null);
         Mockito.when(handler.encrypt(any(ByteArrayInputStream.class), any(ByteArrayOutputStream.class), any(DataKeyMaterials.class), any())).thenReturn(res);
-        Mockito.when(handler.encrypt(any(FileInputStream.class), any(FileOutputStream.class), any(DataKeyMaterials.class), any())).thenReturn(res);
+        Mockito.when(handler.encrypt(any(BufferedInputStream.class), any(BufferedOutputStream.class), any(DataKeyMaterials.class), any())).thenReturn(res);
         Mockito.when(handler.decrypt(any(ByteArrayInputStream.class), any(ByteArrayOutputStream.class), any(DataKeyMaterials.class))).thenReturn(res);
-        Mockito.when(handler.decrypt(any(FileInputStream.class), any(FileOutputStream.class), any(DataKeyMaterials.class))).thenReturn(res);
+        Mockito.when(handler.decrypt(any(BufferedInputStream.class), any(BufferedOutputStream.class), any(DataKeyMaterials.class))).thenReturn(res);
         HuaweiCrypto crypto = new HuaweiCrypto(logEnabled ? buildConfig(true) : config);
         crypto.withCryptoMeterialManager(mm);
         setField(crypto, "cryptoHandler", handler);
@@ -165,7 +165,11 @@ public class HuaweiCryptoTest {
 
     @Test
     public void testEncryptByteArrayNoKeyring() throws Exception {
-        try { new HuaweiCrypto(config).encrypt("test".getBytes(StandardCharsets.UTF_8)); } catch (HuaweicloudException e) { assertNotNull(e.getMessage()); }
+        try {
+            new HuaweiCrypto(config).encrypt("test".getBytes(StandardCharsets.UTF_8));
+        } catch (HuaweicloudException e) {
+            assertNotNull(e.getMessage());
+        }
     }
 
     @Test
@@ -290,7 +294,11 @@ public class HuaweiCryptoTest {
         HuaweiCrypto crypto = new HuaweiCrypto(config);
         crypto.withCryptoMeterialManager(cm);
         setField(crypto, "keyring", Mockito.mock(Keyring.class));
-        try { crypto.encrypt(new EncryptRequest(Collections.emptyMap(), "test-data-too-long".getBytes(StandardCharsets.UTF_8))); } catch (HuaweicloudException e) { assertNotNull(e.getMessage()); }
+        try {
+            crypto.encrypt(new EncryptRequest(Collections.emptyMap(), "test-data-too-long".getBytes(StandardCharsets.UTF_8)));
+        } catch (HuaweicloudException e) {
+            assertNotNull(e.getMessage());
+        }
     }
 
     @Test
@@ -301,7 +309,11 @@ public class HuaweiCryptoTest {
         HuaweiCrypto crypto = new HuaweiCrypto(config);
         crypto.withCryptoMeterialManager(cm);
         setField(crypto, "keyring", Mockito.mock(Keyring.class));
-        try { crypto.encrypt(new ByteArrayInputStream("test-data-too-long".getBytes(StandardCharsets.UTF_8)), new ByteArrayOutputStream(), Collections.emptyMap()); } catch (HuaweicloudException e) { assertNotNull(e.getMessage()); }
+        try {
+            crypto.encrypt(new ByteArrayInputStream("test-data-too-long".getBytes(StandardCharsets.UTF_8)), new ByteArrayOutputStream(), Collections.emptyMap());
+        } catch (HuaweicloudException e) {
+            assertNotNull(e.getMessage());
+        }
     }
 
     @Test
@@ -313,7 +325,10 @@ public class HuaweiCryptoTest {
             Files.write(in.toPath(), "test data".getBytes(StandardCharsets.UTF_8));
             assertNotNull(crypto.encrypt(in.getAbsolutePath(), out.getAbsolutePath(), Collections.emptyMap()));
             Mockito.verify(getLogMock(crypto)).recordEncryptLog(anyString(), anyLong(), anyString(), anyLong(), eq("key-file"), anyString(), isNull());
-        } finally { in.delete(); out.delete(); }
+        } finally {
+            in.delete();
+            out.delete();
+        }
     }
 
     @Test
@@ -325,21 +340,32 @@ public class HuaweiCryptoTest {
             Files.write(in.toPath(), new byte[]{0, 0, 0, 0});
             assertNotNull(crypto.decrypt(in.getAbsolutePath(), out.getAbsolutePath()));
             Mockito.verify(getLogMock(crypto)).recordDecryptLog(anyString(), anyLong(), anyString(), anyLong(), eq("key-file-d"), anyString(), eq("i-file-d"));
-        } finally { in.delete(); out.delete(); }
+        } finally {
+            in.delete();
+            out.delete();
+        }
     }
 
     @Test
     public void testFileEncryptNonExistentFile() throws Exception {
         HuaweiCrypto crypto = new HuaweiCrypto(config);
         setField(crypto, "keyring", Mockito.mock(Keyring.class));
-        try { crypto.encrypt("/non/existent/file.txt", "/non/existent/file.enc", null); } catch (HuaweicloudException e) { assertNotNull(e.getMessage()); }
+        try {
+            crypto.encrypt("/non/existent/file.txt", "/non/existent/file.enc", null);
+        } catch (HuaweicloudException e) {
+            assertNotNull(e.getMessage());
+        }
     }
 
     @Test
     public void testFileDecryptNonExistentFile() throws Exception {
         HuaweiCrypto crypto = new HuaweiCrypto(config);
         setField(crypto, "keyring", Mockito.mock(Keyring.class));
-        try { crypto.decrypt("/non/existent/file.enc", "/non/existent/file.txt"); } catch (HuaweicloudException e) { assertNotNull(e.getMessage()); }
+        try {
+            crypto.decrypt("/non/existent/file.enc", "/non/existent/file.txt");
+        } catch (HuaweicloudException e) {
+            assertNotNull(e.getMessage());
+        }
     }
 
     @Test
@@ -349,7 +375,11 @@ public class HuaweiCryptoTest {
         HuaweiCrypto crypto = new HuaweiCrypto(config);
         crypto.withCryptoMeterialManager(mm);
         setField(crypto, "keyring", Mockito.mock(Keyring.class));
-        try { crypto.encrypt(new EncryptRequest(Collections.emptyMap(), "test".getBytes(StandardCharsets.UTF_8))); } catch (HuaweicloudException e) { assertNotNull(e.getMessage()); }
+        try {
+            crypto.encrypt(new EncryptRequest(Collections.emptyMap(), "test".getBytes(StandardCharsets.UTF_8)));
+        } catch (HuaweicloudException e) {
+            assertNotNull(e.getMessage());
+        }
     }
 
     @Test
@@ -359,6 +389,10 @@ public class HuaweiCryptoTest {
         HuaweiCrypto crypto = new HuaweiCrypto(config);
         crypto.withCryptoMeterialManager(mm);
         setField(crypto, "keyring", Mockito.mock(Keyring.class));
-        try { crypto.decrypt(new byte[]{0, 0, 0, 0}); } catch (HuaweicloudException e) { assertNotNull(e.getMessage()); }
+        try {
+            crypto.decrypt(new byte[]{0, 0, 0, 0});
+        } catch (HuaweicloudException e) {
+            assertNotNull(e.getMessage());
+        }
     }
 }

@@ -182,14 +182,12 @@ public class FileEncryptTest {
             FileOutputStream fileOutputStream = new FileOutputStream("D:\\test.encrypted.rar")) {
             huaweiCrypto.encrypt(fileInputStream, fileOutputStream, map);
             long encryptTime = System.currentTimeMillis() - startTime;
-            System.out.println(encryptTime);
         }
         try (FileInputStream in = new FileInputStream("D:\\test.encrypted.rar");
             FileOutputStream out = new FileOutputStream("D:\\test.decrypted.rar")) {
             huaweiCrypto.decrypt(in, out);
             // 解密
             long decryptTime = System.currentTimeMillis() - startTime;
-            System.out.println(decryptTime);
         }
     }
 }

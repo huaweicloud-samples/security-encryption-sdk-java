@@ -73,7 +73,7 @@ public class LTSSDKProducerTest {
             JavaSDKAppender mockAppender = Mockito.mock(JavaSDKAppender.class);
             Mockito.when(mockBuilder.builder()).thenReturn(mockAppender);
             Mockito.when(mockAppender.getProducer()).thenReturn(mockProducer);
-            return new LTSSDKProducer("testAk", "testSk", "test-project", "cn-north-7", config);
+            return new LTSSDKProducer("testAk", "testSk", "", "test-project", "cn-north-7", config);
         }
     }
 

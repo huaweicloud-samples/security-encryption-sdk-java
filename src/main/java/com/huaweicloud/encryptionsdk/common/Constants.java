@@ -10,7 +10,7 @@ public class Constants {
 
     public static final Integer NUM_1 = 1;
 
-    public static final Integer BLOCK_SIZE = 1024;
+    public static final Integer BLOCK_SIZE = 1024 * 256;
 
     public static final byte VERSION = 1;
 

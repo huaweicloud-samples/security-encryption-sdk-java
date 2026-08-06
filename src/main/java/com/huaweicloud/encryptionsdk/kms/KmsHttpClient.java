@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huaweicloud.encryptionsdk.exception.ErrorMessage;
 import com.huaweicloud.encryptionsdk.exception.HuaweicloudException;
 import com.huaweicloud.encryptionsdk.model.KMSConfig;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
@@ -69,11 +70,17 @@ public class KmsHttpClient {
 
     private final String ak;
     private final String sk;
+    private final String securityToken;
     private final KMSConfig kmsConfig;
 
     public KmsHttpClient(String ak, String sk, KMSConfig kmsConfig) {
+        this(ak, sk, null, kmsConfig);
+    }
+
+    public KmsHttpClient(String ak, String sk, String securityToken, KMSConfig kmsConfig) {
         this.ak = ak;
         this.sk = sk;
+        this.securityToken = securityToken;
         this.kmsConfig = kmsConfig;
     }
 
@@ -111,6 +118,9 @@ public class KmsHttpClient {
             signRequest.setMethod(method);
             signRequest.setUrl(url);
             signRequest.addHeader("Content-Type", CONTENT_TYPE_JSON);
+            if (StringUtils.isNotEmpty(securityToken)) {
+                signRequest.addHeader("X-Security-Token", securityToken);
+            }
             if (jsonBody != null) {
                 signRequest.setBody(jsonBody);
             }

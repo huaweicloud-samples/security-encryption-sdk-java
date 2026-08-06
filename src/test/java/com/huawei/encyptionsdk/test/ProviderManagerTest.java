@@ -19,7 +19,7 @@ public class ProviderManagerTest {
     public void testGetProvider() {
         Provider provider = ProviderManager.getProvider();
         assertNotNull(provider);
-        assertTrue(provider.getName().equals("BC") || provider.getName().equals("KAEProvider"));
+        assertTrue(provider.getName().equals("SunJCE") || provider.getName().equals("KAEProvider"));
     }
 
     @Test
@@ -33,7 +33,7 @@ public class ProviderManagerTest {
     public void testCurrentProvider() {
         String name = ProviderManager.currentProvider();
         assertNotNull(name);
-        assertTrue(name.equals("BC") || name.equals("KAEProvider"));
+        assertTrue(name.equals("SunJCE") || name.equals("KAEProvider"));
     }
 
     @Test
@@ -68,7 +68,7 @@ public class ProviderManagerTest {
             System.setProperty("crypto.sdk.disableKae", "true");
             resetProviderCache();
             Provider provider = ProviderManager.getProvider();
-            assertEquals("BC", provider.getName());
+            assertEquals("SunJCE", provider.getName());
             assertFalse(ProviderManager.isKaeEnabled());
         } finally {
             if (original != null) {
@@ -88,7 +88,7 @@ public class ProviderManagerTest {
             resetProviderCache();
             Provider provider = ProviderManager.getProvider();
             assertNotNull(provider);
-            assertTrue(provider.getName().equals("BC") || provider.getName().equals("KAEProvider"));
+            assertTrue(provider.getName().equals("SunJCE") || provider.getName().equals("KAEProvider"));
         } finally {
             if (original != null) {
                 System.setProperty("crypto.sdk.disableKae", original);
@@ -122,7 +122,7 @@ public class ProviderManagerTest {
             resetProviderCache();
             String name = ProviderManager.currentProvider();
             assertNotNull(name);
-            assertTrue(name.equals("BC") || name.equals("KAEProvider"));
+            assertTrue(name.equals("SunJCE") || name.equals("KAEProvider"));
         } finally {
             if (original != null) {
                 System.setProperty("crypto.sdk.disableKae", original);
@@ -141,7 +141,7 @@ public class ProviderManagerTest {
             resetProviderCache();
             Provider provider = ProviderManager.getProvider();
             assertNotNull(provider);
-            assertTrue(provider.getName().equals("BC") || provider.getName().equals("KAEProvider"));
+            assertTrue(provider.getName().equals("SunJCE") || provider.getName().equals("KAEProvider"));
         } finally {
             if (original != null) {
                 System.setProperty("crypto.sdk.disableKae", original);
@@ -193,7 +193,7 @@ public class ProviderManagerTest {
         try {
             System.setProperty("crypto.sdk.disableKae", "true");
             resetProviderCache();
-            assertEquals("BC", ProviderManager.currentProvider());
+            assertEquals("SunJCE", ProviderManager.currentProvider());
         } finally {
             if (original != null) {
                 System.setProperty("crypto.sdk.disableKae", original);

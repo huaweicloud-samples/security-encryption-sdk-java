@@ -57,10 +57,13 @@ public class KMSKeyCapsuleKeyring extends KMSKeyring {
         keyCapsule.setDatakeyCapsule(Utils.bytesToHex(ciphertextDataKey.getDataKey()));
 
         HuaweiConfig huaweiConfig = getHuaweiConfig();
-        ICredential auth = new BasicCredentials()
+        BasicCredentials auth = new BasicCredentials()
             .withAk(huaweiConfig.getAk())
             .withSk(huaweiConfig.getSk())
             .withProjectId(kmsConfig.getProjectId());
+        if (StringUtils.isNotEmpty(huaweiConfig.getSecurityToken())) {
+            auth = auth.withSecurityToken(huaweiConfig.getSecurityToken());
+        }
 
         // 从密钥胶囊获取或使用本地接入点配置
         AccessPointConfig accessPointConfig = huaweiConfig.getKeyCapsuleConfig().getAccessPointConfig();
@@ -123,7 +126,7 @@ public class KMSKeyCapsuleKeyring extends KMSKeyring {
      */
     private byte[] decryptKeyCapsuleByKms(KeyCapsule keyCapsule, AttestationDocument attestationDocument, KMSConfig kmsConfig, ICredential auth) {
         try {
-            KmsHttpClient client = new KmsHttpClient(getHuaweiConfig().getAk(), getHuaweiConfig().getSk(), kmsConfig);
+            KmsHttpClient client = new KmsHttpClient(getHuaweiConfig().getAk(), getHuaweiConfig().getSk(), getHuaweiConfig().getSecurityToken(), kmsConfig);
             DecryptKeyCapsuleRequest requestBody = new DecryptKeyCapsuleRequest();
             requestBody.setKeyId(keyCapsule.getKeyId());
             requestBody.setDatakeyCapsule(keyCapsule.getDatakeyCapsule());
