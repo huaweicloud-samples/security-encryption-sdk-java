@@ -40,8 +40,6 @@ public class RawSm4KeyringTest {
         keyring.setSymmetricKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.BIT_128_FILE_PATH)));
         dataKeyMaterials.setCryptoAlgorithm(CryptoAlgorithm.SM4_128_GCM_NOPADDING);
         keyring.encryptDataKey(dataKeyMaterials);
-        System.out.println(
-            Base64.getEncoder().encodeToString(dataKeyMaterials.getCiphertextDataKeys().get(0).getDataKey()));
         dataKeyMaterials.setPlaintextDataKey(null);
         keyring.decryptDataKey(dataKeyMaterials);
         SecretKey plaintextDataKey = dataKeyMaterials.getPlaintextDataKey();
@@ -62,8 +60,6 @@ public class RawSm4KeyringTest {
         keyring.setSymmetricKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.BIT_128_FILE_PATH)));
         dataKeyMaterials.setCryptoAlgorithm(CryptoAlgorithm.SM4_128_CBC_PADDING);
         keyring.encryptDataKey(dataKeyMaterials);
-        System.out.println(
-            Base64.getEncoder().encodeToString(dataKeyMaterials.getCiphertextDataKeys().get(0).getDataKey()));
         dataKeyMaterials.setPlaintextDataKey(null);
         keyring.decryptDataKey(dataKeyMaterials);
         SecretKey plaintextDataKey = dataKeyMaterials.getPlaintextDataKey();

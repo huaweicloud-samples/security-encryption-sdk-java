@@ -24,12 +24,16 @@ public class HuaweiConfig {
 
     private String sk;
 
+    private String securityToken;
+
     /**
      * 是否开启自寻region KeyRing
      */
     private boolean isDiscovery;
 
     private List<KMSConfig> kmsConfigList;
+    
+    private List<KMSConfig> originKmsConfigList;
 
     private CryptoAlgorithm cryptoAlgorithm;
 

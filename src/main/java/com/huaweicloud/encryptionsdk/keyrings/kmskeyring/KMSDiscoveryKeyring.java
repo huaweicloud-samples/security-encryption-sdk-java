@@ -24,14 +24,33 @@ public class KMSDiscoveryKeyring extends KMSKeyring {
 
     private void prepareKeyId(DataKeyMaterials dataKeyMaterials) {
         List<KMSConfig> kmsConfigList = new ArrayList<>();
+        HuaweiConfig huaweiConfig = super.getHuaweiConfig();
+        List<KMSConfig> originKmsConfigList = huaweiConfig.getOriginKmsConfigList();
+        if (originKmsConfigList == null || originKmsConfigList.isEmpty()) {
+            huaweiConfig.setOriginKmsConfigList(huaweiConfig.getKmsConfigList());
+            originKmsConfigList = huaweiConfig.getOriginKmsConfigList();
+        }
         for (CiphertextDataKey ciphertextDataKey : dataKeyMaterials.getCiphertextDataKeys()) {
             if (!checkDisvocery(ciphertextDataKey)) {
                 throw new HuaweicloudException(ErrorMessage.NOT_SUPPORT_DISCOVERY_DECRYPT.getMessage());
             }
-            kmsConfigList.add(new KMSConfig(ciphertextDataKey.getRegion(), ciphertextDataKey.getKeyId(),
-                ciphertextDataKey.getProjectId(), ciphertextDataKey.getEndPoint()));
+            KMSConfig currentKmsConfig = null;
+            if (originKmsConfigList != null && !originKmsConfigList.isEmpty()) {
+                for (KMSConfig kmsConfig : originKmsConfigList) {
+                    if (ciphertextDataKey.getRegion().equals(kmsConfig.getRegion()) && !ciphertextDataKey.getProjectId().equals(kmsConfig.getProjectId())) {
+                        currentKmsConfig = new KMSConfig(ciphertextDataKey.getRegion(), ciphertextDataKey.getKeyId(),
+                                kmsConfig.getProjectId(), ciphertextDataKey.getEndPoint());
+                        break;
+                    }
+                }
+            }
+            if (currentKmsConfig == null) {
+                currentKmsConfig = new KMSConfig(ciphertextDataKey.getRegion(), ciphertextDataKey.getKeyId(),
+                        ciphertextDataKey.getProjectId(), ciphertextDataKey.getEndPoint());
+            }
+            kmsConfigList.add(currentKmsConfig);
         }
-        HuaweiConfig huaweiConfig = super.getHuaweiConfig();
+        
         huaweiConfig.setKmsConfigList(kmsConfigList);
     }
 

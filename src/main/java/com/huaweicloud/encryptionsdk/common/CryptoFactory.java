@@ -27,11 +27,11 @@ public final class CryptoFactory {
         if (isSmAlgorithm(algorithm)) {
             return MessageDigest.getInstance(algorithm, ProviderManager.getBcProvider());
         }
-        Provider provider = ProviderManager.getProvider();
+        // MessageDigest is provided by SUN provider, not SunJCE
         try {
-            return MessageDigest.getInstance(algorithm, provider);
+            return MessageDigest.getInstance(algorithm);
         } catch (GeneralSecurityException e) {
-            LOGGER.error("[EncryptionSDK] Get message digest error: {}", e.getMessage());
+            LOGGER.warn("[EncryptionSDK] Get message digest error with default provider: {}, falling back to BC", e.getMessage());
             return MessageDigest.getInstance(algorithm, ProviderManager.getBcProvider());
         }
     }
@@ -53,11 +53,11 @@ public final class CryptoFactory {
         if (isSmAlgorithm(algorithm)) {
             return Signature.getInstance(algorithm, ProviderManager.getBcProvider());
         }
-        Provider provider = ProviderManager.getProvider();
+        // Signature is provided by SUN provider, not SunJCE
         try {
-            return Signature.getInstance(algorithm, provider);
+            return Signature.getInstance(algorithm);
         } catch (GeneralSecurityException e) {
-            LOGGER.error("[EncryptionSDK] Get Signature error: {}", e.getMessage());
+            LOGGER.warn("[EncryptionSDK] Get signature error with default provider: {}, falling back to BC", e.getMessage());
             return Signature.getInstance(algorithm, ProviderManager.getBcProvider());
         }
     }
@@ -66,11 +66,11 @@ public final class CryptoFactory {
         if (isSmAlgorithm(algorithm)) {
             return KeyPairGenerator.getInstance(algorithm, ProviderManager.getBcProvider());
         }
-        Provider provider = ProviderManager.getProvider();
+        // KeyPairGenerator is provided by SUN provider, not SunJCE
         try {
-            return KeyPairGenerator.getInstance(algorithm, provider);
+            return KeyPairGenerator.getInstance(algorithm);
         } catch (GeneralSecurityException e) {
-            LOGGER.error("[EncryptionSDK] Get Key Pair error: {}", e.getMessage());
+            LOGGER.warn("[EncryptionSDK] Get key pair generator error with default provider: {}, falling back to BC", e.getMessage());
             return KeyPairGenerator.getInstance(algorithm, ProviderManager.getBcProvider());
         }
     }
@@ -92,11 +92,11 @@ public final class CryptoFactory {
         if (isSmAlgorithm(algorithm)) {
             return KeyFactory.getInstance(algorithm, ProviderManager.getBcProvider());
         }
-        Provider provider = ProviderManager.getProvider();
+        // KeyFactory is provided by SUN provider, not SunJCE
         try {
-            return KeyFactory.getInstance(algorithm, provider);
+            return KeyFactory.getInstance(algorithm);
         } catch (GeneralSecurityException e) {
-            LOGGER.error("[EncryptionSDK] Get Key Factory error: {}", e.getMessage());
+            LOGGER.warn("[EncryptionSDK] Get key factory error with default provider: {}, falling back to BC", e.getMessage());
             return KeyFactory.getInstance(algorithm, ProviderManager.getBcProvider());
         }
     }

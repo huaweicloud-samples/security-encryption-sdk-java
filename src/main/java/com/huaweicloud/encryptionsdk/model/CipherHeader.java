@@ -252,7 +252,7 @@ public class CipherHeader {
             if (version == 1) {
                 // V1版本：无密钥胶囊
                 deserializeV1Format(dataStream);
-            } else if (version >= 2) {
+            } else if (version == 2) {
                 // V2版本：支持密钥胶囊
                 deserializeV2Format(dataStream);
             } else {
@@ -443,5 +443,22 @@ public class CipherHeader {
         this.iv = Arrays.copyOfRange(headerBytes, 0, algorithm.getIvLen());
         this.contentLength = (int) Utils.byteToLong(
             Arrays.copyOfRange(headerBytes, algorithm.getIvLen(), headerBytes.length));
+    }
+
+    /**
+     * 从 buffer 的指定偏移量反序列化文件头字段（减少拷贝）
+     * 直接读取 buffer[offset:offset+ivLen] 作为 IV，
+     * 直接读取 buffer[offset+ivLen:offset+ivLen+8] 作为 contentLength（大端 8 字节 long），
+     * 避免 Arrays.copyOfRange + ByteBuffer 分配。
+     */
+    public void deserializeFileFields(byte[] buffer, int offset, CryptoAlgorithm algorithm) {
+        int ivLen = algorithm.getIvLen();
+        this.iv = Arrays.copyOfRange(buffer, offset, offset + ivLen);
+        int start = offset + ivLen;
+        long value = 0L;
+        for (int i = 0; i < 8; i++) {
+            value = (value << 8) | (buffer[start + i] & 0xFF);
+        }
+        this.contentLength = (int) value;
     }
 }

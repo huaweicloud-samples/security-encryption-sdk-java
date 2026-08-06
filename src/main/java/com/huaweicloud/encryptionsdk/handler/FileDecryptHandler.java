@@ -1,5 +1,6 @@
 package com.huaweicloud.encryptionsdk.handler;
 
+import com.huaweicloud.encryptionsdk.common.Utils;
 import com.huaweicloud.encryptionsdk.exception.ErrorMessage;
 import com.huaweicloud.encryptionsdk.exception.HuaweicloudException;
 import com.huaweicloud.encryptionsdk.model.CipherHeader;
@@ -56,61 +57,95 @@ public class FileDecryptHandler {
             byte[] readBytes = new byte[blockSize];
             int readLen = 0;
             CipherHandler cipherHandler = new CipherHandler(algorithm, secretKey, mode);
+            byte[] serializedContext = Utils.serializeContext(encryptionContext);
+            int fileHeaderLength = new CipherHeader().getFileHeaderLength(algorithm);
+
+            // 复用 CipherHeader 对象，避免每次循环创建新对象
+            CipherHeader tempHeader = new CipherHeader();
+
             while ((readLen = inputStream.read(readBytes)) != -1) {
-                int unParsedByteTotal = readLen + unParsedByte.length;
-                byte[] bytesToParse = new byte[unParsedByteTotal];
-                System.arraycopy(unParsedByte, 0, bytesToParse, 0, unParsedByte.length);
-                System.arraycopy(readBytes, 0, bytesToParse, unParsedByte.length, readLen);
-                byte[] cipherText = null;
-                if (header != null) {
-                    if (header.getContentLength() > unParsedByteTotal) {
-                        unParsedByte = bytesToParse;
-                        continue;
-                    }
-                    cipherText = Arrays.copyOfRange(bytesToParse, 0, header.getContentLength());
-                    if (header.getContentLength() <= unParsedByteTotal) {
-                        unParsedByte = Arrays.copyOfRange(bytesToParse, header.getContentLength(), bytesToParse.length);
-                    }
+                // 拼接 unParsedByte 和新读取的数据
+                byte[] buf;
+                if (unParsedByte.length > 0) {
+                    buf = new byte[unParsedByte.length + readLen];
+                    System.arraycopy(unParsedByte, 0, buf, 0, unParsedByte.length);
+                    System.arraycopy(readBytes, 0, buf, unParsedByte.length, readLen);
+                    unParsedByte = new byte[0];
+                } else if (readLen == readBytes.length) {
+                    // 读满 blockSize 时直接引用，避免 256KB 拷贝
+                    buf = readBytes;
                 } else {
-                    CipherHeader cipherHeader = new CipherHeader();
-                    int fileHeaderLength = cipherHeader.getFileHeaderLength(algorithm);
-                    byte[] headerBytes = Arrays.copyOfRange(bytesToParse, 0, fileHeaderLength);
-                    cipherHeader.deserializeFileFields(headerBytes, algorithm);
-                    // 加密数据的密文数据大于剩余字节总数，则进行下一轮读取
-                    this.header = cipherHeader;
-                    if (cipherHeader.getContentLength() > unParsedByteTotal - fileHeaderLength) {
-                        unParsedByte = Arrays.copyOfRange(bytesToParse, fileHeaderLength, unParsedByteTotal);
+                    // 最后一次读取可能不满 blockSize
+                    buf = Arrays.copyOf(readBytes, readLen);
+                }
+
+                int offset = 0;
+                int total = buf.length;
+
+                // 如果有残留的 header，先处理
+                if (header != null) {
+                    int remaining = total - offset;
+                    if (header.getContentLength() > remaining) {
+                        unParsedByte = Arrays.copyOfRange(buf, offset, total);
                         continue;
                     }
-                    cipherText = Arrays.copyOfRange(bytesToParse, fileHeaderLength,
-                        fileHeaderLength + cipherHeader.getContentLength());
-                    if (cipherHeader.getContentLength() <= unParsedByteTotal - cipherHeader.getFileHeaderLength(
-                        algorithm)) {
-                        unParsedByte = Arrays.copyOfRange(bytesToParse,
-                            cipherHeader.getContentLength() + fileHeaderLength, bytesToParse.length);
-                    }
+                    // 零拷贝：直接从 buf 读取密文，避免 cipherText 中间数组
+                    cipherHandler.setIv(header.getIv());
+                    cipherHandler.processDecryptByte(buf, offset, header.getContentLength(), outputStream, serializedContext);
+                    offset += header.getContentLength();
+                    header = null;
                 }
-                cipherHandler.setIv(this.header.getIv());
-                cipherHandler.processDecryptByte(cipherText, cipherText.length, outputStream, encryptionContext);
-                header = null;
+
+                // 循环处理所有完整块（零拷贝优化）
+                while (offset + fileHeaderLength <= total) {
+                    // 零拷贝：直接从 buf 读取 header，避免 headerBytes 中间数组
+                    tempHeader.deserializeFileFields(buf, offset, algorithm);
+                    int contentLength = tempHeader.getContentLength();
+                    offset += fileHeaderLength;
+
+                    if (contentLength > total - offset) {
+                        // 数据不完整，保存 header 和剩余数据
+                        header = tempHeader;
+                        unParsedByte = Arrays.copyOfRange(buf, offset, total);
+                        offset = total;
+                        break;
+                    }
+
+                    // 零拷贝：直接从 buf 读取密文，避免 cipherText 中间数组
+                    cipherHandler.setIv(tempHeader.getIv());
+                    cipherHandler.processDecryptByte(buf, offset, contentLength, outputStream, serializedContext);
+                    offset += contentLength;
+                }
+
+                // 保存未处理的剩余数据
+                if (offset < total) {
+                    unParsedByte = Arrays.copyOfRange(buf, offset, total);
+                }
             }
-            // unParsedByte 不为空，则需进行继续解密知道解密结束
+
+            // 处理文件末尾剩余数据
             while (unParsedByte != null && unParsedByte.length > 0) {
-                if (this.header == null) {
-                    CipherHeader cipherHeader = new CipherHeader();
-                    int fileHeaderLength = cipherHeader.getFileHeaderLength(algorithm);
+                if (header == null) {
+                    if (unParsedByte.length < fileHeaderLength) {
+                        break;
+                    }
+                    CipherHeader tailHeader = new CipherHeader();
                     byte[] headerBytes = Arrays.copyOfRange(unParsedByte, 0, fileHeaderLength);
-                    cipherHeader.deserializeFileFields(headerBytes, algorithm);
-                    // 加密数据的密文数据大于剩余字节总数，则进行下一轮读取
-                    this.header = cipherHeader;
+                    tailHeader.deserializeFileFields(headerBytes, algorithm);
+                    header = tailHeader;
                     unParsedByte = Arrays.copyOfRange(unParsedByte, fileHeaderLength, unParsedByte.length);
                 }
-                byte[] cipherText = Arrays.copyOfRange(unParsedByte, 0, this.header.getContentLength());
-                cipherHandler.setIv(this.header.getIv());
-                cipherHandler.processDecryptByte(cipherText, cipherText.length, outputStream, encryptionContext);
-                unParsedByte = Arrays.copyOfRange(unParsedByte, this.header.getContentLength(), unParsedByte.length);
+                if (header.getContentLength() > unParsedByte.length) {
+                    break;
+                }
+                byte[] cipherText = Arrays.copyOfRange(unParsedByte, 0, header.getContentLength());
+                cipherHandler.setIv(header.getIv());
+                cipherHandler.processDecryptByte(cipherText, cipherText.length, outputStream, serializedContext);
+                unParsedByte = Arrays.copyOfRange(unParsedByte, header.getContentLength(), unParsedByte.length);
                 header = null;
             }
+        } catch (HuaweicloudException e) {
+            throw e;
         } catch (Exception e) {
             throw new HuaweicloudException(ErrorMessage.FILE_CHANGED_ERROR.getMessage());
         }

@@ -18,7 +18,11 @@ import com.huaweicloud.encryptionsdk.model.enums.AccessPointType;
 import com.huaweicloud.encryptionsdk.model.enums.CryptoAlgorithm;
 import com.huaweicloud.encryptionsdk.model.request.EncryptRequest;
 import org.apache.commons.codec.DecoderException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -30,6 +34,8 @@ import java.util.Collections;
 import java.util.Map;
 
 public class HuaweiCrypto {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(HuaweiCrypto.class);
 
     private CryptoHadler cryptoHandler;
 
@@ -251,9 +257,9 @@ public class HuaweiCrypto {
         DataKeyMaterials dataKeyMaterials = null;
         File inputFile = new File(sourceFilePath);
         File outputFile = new File(targetFilePath);
-        try (FileInputStream fileInputStream = new FileInputStream(inputFile);
-             FileOutputStream fileOutputStream = new FileOutputStream(outputFile)) {
-            long encryptDataBytes = fileInputStream.available();
+        try (BufferedInputStream bufferedInputStream = new BufferedInputStream(new FileInputStream(inputFile), 64 * 1024);
+             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(outputFile), 64 * 1024)) {
+            long encryptDataBytes = bufferedInputStream.available();
             dataKeyMaterials = new DataKeyMaterials();
             dataKeyMaterials.setEncryptionContexts(
                     encryptionContext == null ? Collections.emptyMap() : encryptionContext);
@@ -263,7 +269,7 @@ public class HuaweiCrypto {
                 throw new HuaweicloudException(ErrorMessage.DATA_EXCEED_LIMIT.getMessage());
             }
             dataKeyMaterials = cryptoMeterialManager.getMaterialsForEncrypt(keyring, dataKeyMaterials, encryptDataBytes);
-            CryptoResult<OutputStream> cryptoResult = cryptoHandler.encrypt(fileInputStream, fileOutputStream, dataKeyMaterials, encryptionContext);
+            CryptoResult<OutputStream> cryptoResult = cryptoHandler.encrypt(bufferedInputStream, bufferedOutputStream, dataKeyMaterials, encryptionContext);
 
             if (huaweiConfig.getLogConfig() != null || huaweiConfig.isLocalLogOnly()) {
                 if (dataKeyMaterials.getKeyCapsule() != null) {
@@ -296,11 +302,11 @@ public class HuaweiCrypto {
         DataKeyMaterials dataKeyMaterials = null;
         File inputFile = new File(sourceFilePath);
         File outputFile = new File(targetFilePath);
-        try (FileInputStream fileInputStream = new FileInputStream(inputFile);
-             FileOutputStream fileOutputStream = new FileOutputStream(outputFile)) {
-            long decryptDataBytes = fileInputStream.available();
-            dataKeyMaterials = cryptoMeterialManager.getMaterialsForStreamDecrypt(keyring, fileInputStream);
-            CryptoResult<OutputStream> cryptoResult = cryptoHandler.decrypt(fileInputStream, fileOutputStream, dataKeyMaterials);
+        try (BufferedInputStream bufferedInputStream = new BufferedInputStream(new FileInputStream(inputFile), 64 * 1024);
+             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(outputFile), 64 * 1024)) {
+            long decryptDataBytes = bufferedInputStream.available();
+            dataKeyMaterials = cryptoMeterialManager.getMaterialsForStreamDecrypt(keyring, bufferedInputStream);
+            CryptoResult<OutputStream> cryptoResult = cryptoHandler.decrypt(bufferedInputStream, bufferedOutputStream, dataKeyMaterials);
 
             if (huaweiConfig.getLogConfig() != null || huaweiConfig.isLocalLogOnly()) {
                 if (dataKeyMaterials.getKeyCapsule() != null) {

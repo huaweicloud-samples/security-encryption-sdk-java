@@ -39,6 +39,11 @@ public class CipherHandler {
 
     private SecretKey secretKey;
 
+    /**
+     * 复用的解密输出缓冲区，避免每次 doFinal 分配新数组
+     */
+    private byte[] decryptOutputBuffer;
+
     public byte[] getIv() {
         return iv;
     }
@@ -166,11 +171,11 @@ public class CipherHandler {
      * encryptionContext：加密上下文
      **/
     public byte[] processEncryptByte(byte[] readBytes, int readLen, OutputStream outputStream,
-        Map<String, String> encryptionContext) {
+        byte[] serializedContext) {
         try {
             initCipher();
             if (algorithm != CryptoAlgorithm.SM4_128_CBC_PADDING) {
-                cipher.updateAAD(Utils.serializeContext(encryptionContext));
+                cipher.updateAAD(serializedContext);
             }
             byte[] bytes = cipher.doFinal(readBytes, 0, readLen);
             CipherHeader cipherHeader = new CipherHeader();
@@ -195,15 +200,42 @@ public class CipherHandler {
      * encryptionContext：加密上下文
      **/
     public byte[] processDecryptByte(byte[] readBytes, int readLen, OutputStream outputStream,
-        Map<String, String> encryptionContext) {
+        byte[] serializedContext) {
         try {
             initCipher();
             if (algorithm != CryptoAlgorithm.SM4_128_CBC_PADDING) {
-                cipher.updateAAD(Utils.serializeContext(encryptionContext));
+                cipher.updateAAD(serializedContext);
             }
             byte[] bytes = cipher.doFinal(readBytes, 0, readLen);
             outputStream.write(bytes);
             return bytes;
+        } catch (Exception e) {
+            throw new HuaweicloudException(ErrorMessage.PROCESS_FILE_ERROR.getMessage(), e);
+        }
+    }
+
+    /**
+     * 解密流数据（带偏移量，支持零拷贝和输出缓冲区复用）
+     * @param buf 输入缓冲区
+     * @param offset 密文在缓冲区中的偏移量
+     * @param len 密文长度
+     * @param outputStream 明文输出流
+     * @param serializedContext 加密上下文
+     * @return 解密后的字节数
+     */
+    public int processDecryptByte(byte[] buf, int offset, int len, OutputStream outputStream,
+        byte[] serializedContext) {
+        try {
+            initCipher();
+            if (algorithm != CryptoAlgorithm.SM4_128_CBC_PADDING) {
+                cipher.updateAAD(serializedContext);
+            }
+            if (decryptOutputBuffer == null || decryptOutputBuffer.length < len) {
+                decryptOutputBuffer = new byte[len];
+            }
+            int written = cipher.doFinal(buf, offset, len, decryptOutputBuffer, 0);
+            outputStream.write(decryptOutputBuffer, 0, written);
+            return written;
         } catch (Exception e) {
             throw new HuaweicloudException(ErrorMessage.PROCESS_FILE_ERROR.getMessage(), e);
         }

@@ -1,14 +1,12 @@
-package com.huaweicloud.encryptionsdk.example;
+package com.huaweicloud.encryptionsdk.examples;
 
 import com.huaweicloud.encryptionsdk.HuaweiConfig;
 import com.huaweicloud.encryptionsdk.HuaweiCrypto;
 import com.huaweicloud.encryptionsdk.keyrings.KmsKeyringFactory;
 import com.huaweicloud.encryptionsdk.keyrings.kmskeyring.KMSKeyring;
-import com.huaweicloud.encryptionsdk.model.CryptoResult;
 import com.huaweicloud.encryptionsdk.model.KMSConfig;
 import com.huaweicloud.encryptionsdk.model.enums.CryptoAlgorithm;
 import com.huaweicloud.encryptionsdk.model.enums.KeyringTypeEnum;
-import com.huaweicloud.encryptionsdk.model.request.EncryptRequest;
 import com.huaweicloud.encryptionsdk.util.CommonUtils;
 
 import org.apache.commons.lang3.Validate;

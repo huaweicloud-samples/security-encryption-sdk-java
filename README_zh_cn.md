@@ -90,11 +90,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @description: 本示例演示使用 KMS 对称主密钥，算法类型为 AES 密钥环 进行加密，然后再解密。
+ * @description: 本示例演示使用 KMSDiscoveryKeyring 密钥环进行加密文件，然后解密文件。
+ * </p>
+ * 使用 KMSDiscoveryKeyring 密钥环进行解密无需再传递 keyId，regionId，projectId 等信息，仅需ak，sk即可。
  * </p>
  * 你需要提供访问华为云 KMS 的 ak、sk 作为环境变量，以及可使用的 KMS 对称主密钥所属的 projectId、region、keyId 和纯文本字符串作为参数。
  */
-public class KmsEncryptionExample {
+public class KmsDiscoveryEncryptionExample {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(KmsEncryptionExample.class);
 
     public static void main(String[] args) {
         // 1. 获取环境变量中的 ak、sk
@@ -107,18 +111,27 @@ public class KmsEncryptionExample {
         String projectId = args[0];
         String region = args[1];
         String keyId = args[2];
-        String plainText = args[3];
+        String endpoint = args[3];
+
+        // 待加密文件路径，精确到文件
+        String originFilePath = args[4];
+        // 加密后的文件路径，精确到文件
+        String targetEncryptFilePath = args[5];
+        // 解密后的文件路径，精确到文件
+        String targetDecryptFilePath = args[6];
 
         // 3. KMS 配置基本信息：封装 region，keyId，projectId 信息（可支持多个 region，此处仅设置一个 region 信息）
-        List<KMSConfig> kmsConfigList = Collections.singletonList(new KMSConfig(region, keyId, projectId));
+        List<KMSConfig> kmsConfigList = Collections.singletonList(new KMSConfig(region, keyId, projectId, endpoint));
 
         // 4. 初始化 KMS 相关信息及设置加密算法
         HuaweiConfig huaweiConfig = HuaweiConfig.builder()
-            .sk(sk)
-            .ak(ak)
-            .kmsConfigList(kmsConfigList)
-            .cryptoAlgorithm(CryptoAlgorithm.AES_256_GCM_NOPADDING)
-            .build();
+                .sk(sk)
+                .ak(ak)
+                .kmsConfigList(kmsConfigList)
+                .cryptoAlgorithm(CryptoAlgorithm.AES_256_GCM_NOPADDING)
+                // 开启discover密钥环
+                .isDiscovery(true)
+                .build();
 
         // 5. 选择 KMS 密钥环类型
         KMSKeyring keyring = new KmsKeyringFactory().getKeyring(KeyringTypeEnum.KMS_MULTI_REGION.getType());
@@ -130,13 +143,71 @@ public class KmsEncryptionExample {
         Map<String, String> map = CommonUtils.getEncryptoMap();
 
         // 8. 加密数据
-        CryptoResult<byte[]> result = huaweiCrypto.encrypt(
-            new EncryptRequest(map, plainText.getBytes(StandardCharsets.UTF_8)));
-        // 9. 解密数据
-        CryptoResult<byte[]> decrypt = huaweiCrypto.decrypt(result.getResult());
+        huaweiCrypto.encrypt(originFilePath, targetEncryptFilePath, map);
 
-        // 10. 验证解密后的数据是否和原始纯文本字符串一致
-        Validate.isTrue(plainText.equals(new String(decrypt.getResult())));
+        LOGGER.info("文件加密完成，源文件：{}, 加密后文件：{}", originFilePath, targetEncryptFilePath);
+
+        // 9. 构建 KMS discovery 解密 SDK（无需再传递 keyId，regionId，projectId 等信息）
+        HuaweiConfig huaweiConfigDiscovery = HuaweiConfig.builder().sk(sk).ak(ak).build();
+        KMSKeyring keyringDiscovery = new KmsKeyringFactory().getKeyring(KeyringTypeEnum.KMS_DISCOVERY.getType());
+        HuaweiCrypto huaweiCryptoDecrypt = new HuaweiCrypto(huaweiConfigDiscovery).withKeyring(keyringDiscovery);
+
+        // 10. 解密数据
+        huaweiCryptoDecrypt.decrypt(targetEncryptFilePath, targetDecryptFilePath);
+
+        LOGGER.info("文件解密完成，加密文件：{}, 解密后文件：{}", targetEncryptFilePath, targetDecryptFilePath);
+
+        // 11. 验证解密后的数据是否和原始纯文本字符串一致
+        Validate.isTrue(compareFile(originFilePath, targetDecryptFilePath));
+    }
+
+    /**
+     * 对比2个路径文件内容是否一致
+     * @param sourceFilePath 源文件路劲
+     * @param targetFilePath 目标文件路径
+     * @return 一致返回 true，否则返回 false
+     */
+    public static boolean compareFile(String sourceFilePath, String targetFilePath) {
+        File sourceFile = new File(sourceFilePath);
+        File targetFile = new File(targetFilePath);
+        if (sourceFile.length() != targetFile.length()) {
+            return false;
+        }
+
+        try (FileInputStream sourceStream = new FileInputStream(sourceFile);
+             FileInputStream targetStream = new FileInputStream(sourceFile)) {
+            byte[] sourceBytes = new byte[1024];
+            byte[] targetBytes = new byte[1024];
+
+            int sourceBytesRead;
+            int targetBytesRead;
+            while ((sourceBytesRead = sourceStream.read(sourceBytes)) != -1) {
+                targetBytesRead = targetStream.read(targetBytes);
+
+                if (sourceBytesRead != targetBytesRead || !isEqual(sourceBytes, targetBytes, sourceBytesRead)) {
+                    return false;
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage());
+        }
+        return true;
+    }
+
+    /**
+     * 对比 2 个字节数组的前 n 个字节是否一致
+     * @param sourceBytes 源字节数组
+     * @param targetBytes 目标字节数组
+     * @param bytesRead 需要对比字节个数
+     * @return 一致返回 true，否则返回 false
+     */
+    public static boolean isEqual(byte[] sourceBytes, byte[] targetBytes, int bytesRead) {
+        for (int i = 0; i < bytesRead; i++) {
+            if (sourceBytes[i] != targetBytes[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 }
 ```
@@ -200,12 +271,12 @@ public class KeyCapsuleExample {
 
         // 6. 创建密钥胶囊密钥环并初始化 SDK
         KMSKeyring keyring = new KmsKeyringFactory().getKeyring(KeyringTypeEnum.KMS_KEY_CAPSULE.getType());
-        HuaweiCrypto crypto = new HuaweiCrypto(config).withKeyring(keyring);
+        HuaweiCrypto encryptCrypto = new HuaweiCrypto(config).withKeyring(keyring);
 
         // 7. 加密
         EncryptRequest encryptRequest = new EncryptRequest();
         encryptRequest.setPlainText("Hello, Key Capsule!".getBytes(StandardCharsets.UTF_8));
-        CryptoResult<byte[]> result = crypto.encrypt(encryptRequest);
+        CryptoResult<byte[]> result = encryptCrypto.encrypt(encryptRequest);
 
         // 8. 构建解密配置（解密无需 kmsConfigList）
         HuaweiConfig decryptConfig = HuaweiConfig.builder()
@@ -219,6 +290,10 @@ public class KeyCapsuleExample {
         // 9. 解密
         CryptoResult<byte[]> decryptResult = decryptCrypto.decrypt(result.getResult());
         System.out.println(new String(decryptResult.getResult(), StandardCharsets.UTF_8));
+        
+        // 10. 关闭HuaweiCrypto
+        encryptCrypto.close();
+        decryptCrypto.close();
     }
 }
 ```

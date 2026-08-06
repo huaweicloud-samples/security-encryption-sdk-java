@@ -40,12 +40,10 @@ public class RawAesKeyringTest {
         keyring.setSymmetricKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.BIT_128_FILE_PATH)));
         dataKeyMaterials.setCryptoAlgorithm(CryptoAlgorithm.AES_128_GCM_NOPADDING);
         keyring.encryptDataKey(dataKeyMaterials);
-        System.out.println(Utils.bytesToHex(dataKeyMaterials.getCiphertextDataKeys().get(0).getDataKey()));
         dataKeyMaterials.setPlaintextDataKey(null);
         keyring.decryptDataKey(dataKeyMaterials);
         SecretKey plaintextDataKey = dataKeyMaterials.getPlaintextDataKey();
         String encodedKey = Base64.getEncoder().encodeToString(plaintextDataKey.getEncoded());
-        System.out.println(encodedKey);
         Assert.assertEquals(encodedKey, dataKey);
 
     }

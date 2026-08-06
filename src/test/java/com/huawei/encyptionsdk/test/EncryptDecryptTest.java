@@ -76,14 +76,12 @@ public class EncryptDecryptTest {
         CryptoResult<byte[]> result = huaweiCrypto.encrypt(
             new EncryptRequest(map, PLAIN_TEXT.getBytes(StandardCharsets.UTF_8)));
         CryptoResult<byte[]> decrypt1 = huaweiCrypto.decrypt(result.getResult());
-        System.out.println(new String(decrypt1.getResult()));
 
         // discover 解密
         HuaweiConfig huaweiConfigDecrypt = HuaweiConfig.builder().sk(SECRET_ACCESS_KEY).ak(ACCESS_KEY).build();
         KMSKeyring keyringDecrypt = new KmsKeyringFactory().getKeyring(KeyringTypeEnum.KMS_DISCOVERY.getType());
         HuaweiCrypto huaweiCryptoDecrypt = new HuaweiCrypto(huaweiConfigDecrypt).withKeyring(keyringDecrypt);
         CryptoResult<byte[]> decrypt = huaweiCryptoDecrypt.decrypt(result.getResult());
-        System.out.println(new String(decrypt.getResult()));
         Assert.assertEquals(new String(decrypt.getResult()).intern(), PLAIN_TEXT);
     }
 
@@ -105,7 +103,6 @@ public class EncryptDecryptTest {
         CryptoResult<byte[]> result = huaweiCrypto.encrypt(
             new EncryptRequest(map, PLAIN_TEXT.getBytes(StandardCharsets.UTF_8)));
         CryptoResult<byte[]> decrypt1 = huaweiCrypto.decrypt(result.getResult());
-        System.out.println(new String(decrypt1.getResult()));
 
         // discover 解密
         HuaweiConfig multiDecryptConfig = HuaweiConfig.builder()
@@ -116,102 +113,96 @@ public class EncryptDecryptTest {
             .build();
         HuaweiCrypto decryptHuaweiCrypto = new HuaweiCrypto(multiDecryptConfig).withKeyring(keyring);
         CryptoResult<byte[]> decrypt = decryptHuaweiCrypto.decrypt(result.getResult());
-        System.out.println(new String(decrypt1.getResult()));
 
     }
 
     @Test
     public void Should_ok_When_RawAESEncrypt() {
-        HuaweiConfig huaweiConfig = HuaweiConfig.builder()
+        HuaweiConfig tempHuaweiConfig = HuaweiConfig.builder()
             .cryptoAlgorithm(CryptoAlgorithm.AES_256_GCM_NOPADDING)
             .build();
         RawKeyring keyring = new RawKeyringFactory().getKeyring(KeyringTypeEnum.RAW_AES.getType());
         keyring.setSymmetricKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.BIT_256_FILE_PATH)));
 
-        HuaweiCrypto huaweiCrypto = new HuaweiCrypto(huaweiConfig).withKeyring(keyring);
+        HuaweiCrypto huaweiCrypto = new HuaweiCrypto(tempHuaweiConfig).withKeyring(keyring);
 
         Map<String, String> map = CommonUtils.getEncryptoMap();
         CryptoResult<byte[]> result = huaweiCrypto.encrypt(
             new EncryptRequest(map, PLAIN_TEXT.getBytes(StandardCharsets.UTF_8)));
         CryptoResult<byte[]> decrypt = huaweiCrypto.decrypt(result.getResult());
-        System.out.println(new String(decrypt.getResult()));
         // 解密
         Assert.assertEquals(new String(decrypt.getResult()), PLAIN_TEXT);
     }
 
     @Test
     public void Should_ok_When_RawSM4GCMEncrypt() {
-        HuaweiConfig huaweiConfig = HuaweiConfig.builder()
+        HuaweiConfig tempHuaweiConfig = HuaweiConfig.builder()
             .cryptoAlgorithm(CryptoAlgorithm.SM4_128_GCM_NOPADDING)
             .build();
         RawKeyring keyring = new RawKeyringFactory().getKeyring(KeyringTypeEnum.RAW_SM4_GCN.getType());
         keyring.setSymmetricKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.BIT_128_FILE_PATH)));
 
-        HuaweiCrypto huaweiCrypto = new HuaweiCrypto(huaweiConfig).withKeyring(keyring);
+        HuaweiCrypto huaweiCrypto = new HuaweiCrypto(tempHuaweiConfig).withKeyring(keyring);
 
         Map<String, String> map = CommonUtils.getEncryptoMap();
         CryptoResult<byte[]> result = huaweiCrypto.encrypt(
             new EncryptRequest(map, PLAIN_TEXT.getBytes(StandardCharsets.UTF_8)));
         CryptoResult<byte[]> decrypt = huaweiCrypto.decrypt(result.getResult());
-        System.out.println(new String(decrypt.getResult()));
         // 解密
         Assert.assertEquals(new String(decrypt.getResult()), PLAIN_TEXT);
     }
 
     @Test
     public void Should_ok_When_RawSM4CBCEncrypt() {
-        HuaweiConfig huaweiConfig = HuaweiConfig.builder()
+        HuaweiConfig tempHuaweiConfig = HuaweiConfig.builder()
             .cryptoAlgorithm(CryptoAlgorithm.SM4_128_GCM_NOPADDING)
             .build();
         RawKeyring keyring = new RawKeyringFactory().getKeyring(KeyringTypeEnum.RAW_SM4_CBC.getType());
         keyring.setSymmetricKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.BIT_128_FILE_PATH)));
 
-        HuaweiCrypto huaweiCrypto = new HuaweiCrypto(huaweiConfig).withKeyring(keyring);
+        HuaweiCrypto huaweiCrypto = new HuaweiCrypto(tempHuaweiConfig).withKeyring(keyring);
 
         Map<String, String> map = CommonUtils.getEncryptoMap();
         CryptoResult<byte[]> result = huaweiCrypto.encrypt(
             new EncryptRequest(map, PLAIN_TEXT.getBytes(StandardCharsets.UTF_8)));
         CryptoResult<byte[]> decrypt = huaweiCrypto.decrypt(result.getResult());
-        System.out.println(new String(decrypt.getResult()));
         // 解密
         Assert.assertEquals(new String(decrypt.getResult()), PLAIN_TEXT);
     }
 
     @Test
     public void Should_ok_When_RawSM2Encrypt() {
-        HuaweiConfig huaweiConfig = HuaweiConfig.builder()
+        HuaweiConfig tempHuaweiConfig = HuaweiConfig.builder()
             .cryptoAlgorithm(CryptoAlgorithm.SM4_128_GCM_NOPADDING)
             .build();
         RawKeyring keyring = new RawKeyringFactory().getKeyring(KeyringTypeEnum.RAW_SM2.getType());
         keyring.setPrivateKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.PRI_FILE_PATH)));
         keyring.setPublicKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.PUB_FILE_PATH)));
 
-        HuaweiCrypto huaweiCrypto = new HuaweiCrypto(huaweiConfig).withKeyring(keyring);
+        HuaweiCrypto huaweiCrypto = new HuaweiCrypto(tempHuaweiConfig).withKeyring(keyring);
 
         Map<String, String> map = CommonUtils.getEncryptoMap();
         CryptoResult<byte[]> result = huaweiCrypto.encrypt(
             new EncryptRequest(map, PLAIN_TEXT.getBytes(StandardCharsets.UTF_8)));
         CryptoResult<byte[]> decrypt = huaweiCrypto.decrypt(result.getResult());
-        System.out.println(new String(decrypt.getResult()));
         // 解密
         Assert.assertEquals(new String(decrypt.getResult()), PLAIN_TEXT);
     }
 
     @Test
     public void Should_ok_When_RawRSAEncrypt() {
-        HuaweiConfig huaweiConfig = HuaweiConfig.builder()
+        HuaweiConfig tempHuaweiConfig = HuaweiConfig.builder()
             .cryptoAlgorithm(CryptoAlgorithm.AES_128_GCM_NOPADDING)
             .build();
         RawKeyring keyring = new RawKeyringFactory().getKeyring(KeyringTypeEnum.RAW_RSA.getType());
         keyring.setPrivateKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.RSA_PRI_FILE_PATH)));
         keyring.setPublicKey(Utils.readMasterKey(Collections.singletonList(FilePathForExampleConstants.RSA_PUB_FILE_PATH)));
 
-        HuaweiCrypto huaweiCrypto = new HuaweiCrypto(huaweiConfig).withKeyring(keyring);
+        HuaweiCrypto huaweiCrypto = new HuaweiCrypto(tempHuaweiConfig).withKeyring(keyring);
         Map<String, String> map = CommonUtils.getEncryptoMap();
         CryptoResult<byte[]> result = huaweiCrypto.encrypt(
             new EncryptRequest(map, PLAIN_TEXT.getBytes(StandardCharsets.UTF_8)));
         CryptoResult<byte[]> decrypt = huaweiCrypto.decrypt(result.getResult());
-        System.out.println(new String(decrypt.getResult()));
         // 解密
         Assert.assertEquals(new String(decrypt.getResult()), PLAIN_TEXT);
     }

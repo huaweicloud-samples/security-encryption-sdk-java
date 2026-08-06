@@ -8,6 +8,7 @@ import com.huaweicloud.lts.producer.Result;
 import com.huaweicloud.lts.producer.exception.ProducerException;
 import com.huaweicloud.lts.producer.model.log.LogContent;
 import com.huaweicloud.lts.producer.model.log.LogItem;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +35,7 @@ public class LTSSDKProducer {
     private String logStreamId;
     private boolean useNameForSend;
 
-    public LTSSDKProducer(String ak, String sk, String projectId, String region, LogConfig logConfig) {
+    public LTSSDKProducer(String ak, String sk, String securityToken, String projectId, String region, LogConfig logConfig) {
         this.logConfig = logConfig;
         this.logFileBackup = new LogFileBackup(logConfig.getBackupDir(), logConfig.isFailOnBackupDirMissing());
 
@@ -50,15 +51,15 @@ public class LTSSDKProducer {
             LOGGER.info("Using logGroupId/logStreamId for send: {}, {}", this.logGroupId, this.logStreamId);
         }
 
-        this.producer = createProducer(ak, sk, projectId, region, logConfig);
-        
+        this.producer = createProducer(ak, sk, securityToken, projectId, region, logConfig);
+
         this.initialized = true;
 
         recoverFailedLogsOnStartup();
     }
 
-    private Producer createProducer(String ak, String sk, String projectId, String region, LogConfig config) {
-        JavaSDKAppender appender = JavaSDKAppender.custom()
+    private Producer createProducer(String ak, String sk, String securityToken, String projectId, String region, LogConfig config) {
+        JavaSDKAppender.Builder builder = JavaSDKAppender.custom()
             .setProjectId(projectId)
             .setAccessKeyId(ak)
             .setAccessKeySecret(sk)
@@ -79,7 +80,11 @@ public class LTSSDKProducer {
 
             .setEnableLocalTest(config.isEnableLocalTest())
 
-            .setLogGroupStreamByName(true).builder();
+            .setLogGroupStreamByName(useNameForSend);
+        if (StringUtils.isNotEmpty(securityToken)) {
+            builder.setSecurityToken(securityToken);
+        }
+        JavaSDKAppender appender = builder.builder();
 
         LOGGER.info("LTS Producer created with config:");
         LOGGER.info("  logGroupId: {}", this.logGroupId);

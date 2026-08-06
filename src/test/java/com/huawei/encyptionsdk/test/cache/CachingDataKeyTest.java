@@ -64,7 +64,6 @@ public class CachingDataKeyTest {
         byte[] cipherResult = encryptResult.getResult();
 
         CryptoResult<byte[]> decrypt = huaweiCrypto.decrypt(cipherResult);
-        System.out.println(new String(decrypt.getResult()));
         assertSame(new String(decrypt.getResult()).intern(), PLAIN_TEXT);
 
         Thread.sleep(2000);
@@ -72,7 +71,6 @@ public class CachingDataKeyTest {
         cipherResult = encryptResult.getResult();
 
         decrypt = huaweiCrypto.decrypt(cipherResult);
-        System.out.println(new String(decrypt.getResult()));
         assertSame(new String(decrypt.getResult()).intern(), "cache");
 
         Thread.sleep(4000);
@@ -80,7 +78,6 @@ public class CachingDataKeyTest {
         cipherResult = encryptResult.getResult();
 
         decrypt = huaweiCrypto.decrypt(cipherResult);
-        System.out.println(new String(decrypt.getResult()));
         assertSame(new String(decrypt.getResult()).intern(), "no_cache");
     }
 
@@ -101,7 +98,6 @@ public class CachingDataKeyTest {
         byte[] cipherResult = encryptResult.getResult();
 
         CryptoResult<byte[]> decrypt = huaweiCrypto.decrypt(cipherResult);
-        System.out.println(new String(decrypt.getResult()));
         assertSame(new String(decrypt.getResult()).intern(), PLAIN_TEXT);
 
         Thread.sleep(2000);
@@ -109,7 +105,6 @@ public class CachingDataKeyTest {
         cipherResult = encryptResult.getResult();
 
         decrypt = huaweiCrypto.decrypt(cipherResult);
-        System.out.println(new String(decrypt.getResult()));
         assertSame(new String(decrypt.getResult()).intern(), "cache");
 
         Thread.sleep(4000);
@@ -117,7 +112,6 @@ public class CachingDataKeyTest {
         cipherResult = encryptResult.getResult();
 
         decrypt = huaweiCrypto.decrypt(cipherResult);
-        System.out.println(new String(decrypt.getResult()));
         assertSame(new String(decrypt.getResult()).intern(), "no_cache");
     }
 
@@ -136,51 +130,47 @@ public class CachingDataKeyTest {
         byte[] cipherResult = encryptResult.getResult();
 
         CryptoResult<byte[]> decrypt = huaweiCrypto.decrypt(cipherResult);
-        System.out.println(new String(decrypt.getResult()));
         assertSame(new String(decrypt.getResult()).intern(), PLAIN_TEXT);
     }
 
     @Test(expected = HuaweicloudException.class)
     public void Should_ok_When_KMSCacheTest() throws InterruptedException {
         Map<String, String> encryptionContext = CommonUtils.getEncryptionContext();
-        HuaweiConfig config = HuaweiConfig.builder()
+        HuaweiConfig tempConfig = HuaweiConfig.builder()
             .sk(EncryptDecryptTest.SECRET_ACCESS_KEY)
             .ak(EncryptDecryptTest.ACCESS_KEY)
             .kmsConfigList(Collections.singletonList(
                 new KMSConfig(EncryptDecryptTest.REGION, EncryptDecryptTest.KEYID, EncryptDecryptTest.PROJECT_ID)))
             .cryptoAlgorithm(CryptoAlgorithm.AES_256_GCM_NOPADDING)
             .build();
-        HuaweiCrypto huaweiCrypto = new HuaweiCrypto(config);
-        huaweiCrypto.withKeyring(new KmsKeyringFactory().getKeyring(KeyringTypeEnum.KMS_MULTI_REGION.getType()));
+        HuaweiCrypto tempHuaweiCrypto = new HuaweiCrypto(tempConfig);
+        tempHuaweiCrypto.withKeyring(new KmsKeyringFactory().getKeyring(KeyringTypeEnum.KMS_MULTI_REGION.getType()));
 
         CacheCryptoMeterialManager cacheCryptoMeterialManager = new CacheCryptoMeterialManager(new LocalDataKeyCache(),
-            config);
+                tempConfig);
         cacheCryptoMeterialManager.setMaxByteLimit(50);
         cacheCryptoMeterialManager.setSurvivalTime(5000);
-        huaweiCrypto.withCryptoMeterialManager(cacheCryptoMeterialManager);
+        tempHuaweiCrypto.withCryptoMeterialManager(cacheCryptoMeterialManager);
 
-        CryptoResult<byte[]> encryptResult = huaweiCrypto.encrypt(
+        CryptoResult<byte[]> encryptResult = tempHuaweiCrypto.encrypt(
             new EncryptRequest(encryptionContext, PLAIN_TEXT.getBytes(ENCODING)));
         byte[] cipherResult = encryptResult.getResult();
 
-        CryptoResult<byte[]> decrypt = huaweiCrypto.decrypt(cipherResult);
-        System.out.println(new String(decrypt.getResult()));
+        CryptoResult<byte[]> decrypt = tempHuaweiCrypto.decrypt(cipherResult);
         assertSame(new String(decrypt.getResult()).intern(), PLAIN_TEXT);
 
         Thread.sleep(2000);
-        encryptResult = huaweiCrypto.encrypt(new EncryptRequest(encryptionContext, "cache".getBytes(ENCODING)));
+        encryptResult = tempHuaweiCrypto.encrypt(new EncryptRequest(encryptionContext, "cache".getBytes(ENCODING)));
         cipherResult = encryptResult.getResult();
 
-        decrypt = huaweiCrypto.decrypt(cipherResult);
-        System.out.println(new String(decrypt.getResult()));
+        decrypt = tempHuaweiCrypto.decrypt(cipherResult);
         assertSame(new String(decrypt.getResult()).intern(), "cache");
 
         Thread.sleep(4000);
-        encryptResult = huaweiCrypto.encrypt(new EncryptRequest(encryptionContext, "no_cache".getBytes(ENCODING)));
+        encryptResult = tempHuaweiCrypto.encrypt(new EncryptRequest(encryptionContext, "no_cache".getBytes(ENCODING)));
         cipherResult = encryptResult.getResult();
 
-        decrypt = huaweiCrypto.decrypt(cipherResult);
-        System.out.println(new String(decrypt.getResult()));
+        decrypt = tempHuaweiCrypto.decrypt(cipherResult);
         assertSame(new String(decrypt.getResult()).intern(), "no_cache");
     }
 

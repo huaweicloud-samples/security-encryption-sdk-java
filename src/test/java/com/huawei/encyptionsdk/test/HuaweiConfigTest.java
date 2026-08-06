@@ -91,8 +91,8 @@ public class HuaweiConfigTest {
     @Test
     public void testAllArgsConstructor() {
         KMSConfig kmsConfig = new KMSConfig("r", "k", "p", "e");
-        HuaweiConfig config = new HuaweiConfig("ak", "sk", true,
-                Collections.singletonList(kmsConfig), CryptoAlgorithm.AES_256_GCM_NOPADDING,
+        HuaweiConfig config = new HuaweiConfig("ak", "sk", "", true,
+                Collections.singletonList(kmsConfig), null, CryptoAlgorithm.AES_256_GCM_NOPADDING,
                 null, null, false);
         assertEquals("ak", config.getAk());
         assertEquals("sk", config.getSk());

@@ -52,7 +52,9 @@ public class KeyCapsuleDataKeyGenerateTest {
     }
 
     @FunctionalInterface
-    private interface GenerateAction { void accept(DataKeyGenerate g) throws Exception; }
+    private interface GenerateAction {
+        void accept(DataKeyGenerate g) throws Exception;
+    }
 
     private void withMockedKms(CreateKeyCapsuleResponse response, GenerateAction action) throws Exception {
         try (MockedConstruction<KmsHttpClient> mocked = Mockito.mockConstruction(KmsHttpClient.class,

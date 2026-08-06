@@ -161,8 +161,11 @@ public class CryptoHandlerTest {
     }
 
     private void changeFile(File file) {
-        try (FileOutputStream fileOutputStream = new FileOutputStream(file, true)) {
-            fileOutputStream.write(1);
+        try (java.io.RandomAccessFile raf = new java.io.RandomAccessFile(file, "rw")) {
+            if (raf.length() > 0) {
+                raf.seek(raf.length() / 2);
+                raf.write(raf.readByte() ^ 0xFF);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

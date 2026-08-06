@@ -17,7 +17,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
 public class LocalDataKeyGenerate implements DataKeyGenerate {
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(LocalDataKeyGenerate.class);
 
     private static final String KEY_ALGORITHM_SM4 = "SM4";

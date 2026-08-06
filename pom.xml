@@ -4,7 +4,7 @@
 
     <groupId>com.huaweicloud.sdk</groupId>
     <artifactId>huaweicloud-encryption-sdk-java</artifactId>
-    <version>1.1.2</version>
+    <version>1.1.9</version>
     <packaging>jar</packaging>
 
     <name>huaweicloud-encryption-sdk-java</name>
@@ -45,11 +45,6 @@
             <version>2.0.17</version>
         </dependency>
         <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>fastjson</artifactId>
-            <version>2.0.61</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>4.5.14</version>
@@ -69,11 +64,6 @@
                     <artifactId>slf4j-api</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-ext-jdk18on</artifactId>
-            <version>1.78.1</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -127,7 +117,6 @@
             <artifactId>lts-sdk-java</artifactId>
             <version>1.1.7</version>
         </dependency>
-
         <dependency>
             <groupId>org.jacoco</groupId>
             <artifactId>org.jacoco.agent</artifactId>
@@ -215,39 +204,6 @@
                         --add-exports java.base/jdk.internal.access=ALL-UNNAMED
                     </argLine>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>com.huawei.dt</groupId>
-                <artifactId>dt4j-coverage-maven-plugin</artifactId>
-                <!-- 请参考HDT JAVA动态选择最新发布的版本 -->
-                <version>2.1.2</version>
-                <configuration>
-                    <activeCoverage>true</activeCoverage>
-                    <reportName>${project.name}</reportName>
-                    <reportVersion>${project.version}</reportVersion>
-                    <!-- 增量代码对比基线根目录 -->
-                    <checkoutDirectory>${WORKSPACE}/${base_code_path}</checkoutDirectory>
-                    <skipCheckout>true</skipCheckout>
-                    <!-- 不纳入覆盖率 -->
-                    <excludeStats>
-                        <excludeStat>com/huawei/cbc/cbccustomerrnverifyservice/delegate/*</excludeStat>
-                        <excludeStat>com/huawei/cbc/cbccustomerrnverifyservice/model/*</excludeStat>
-                        <excludeStat>com/huawei/cbc/customerom/event/model/*</excludeStat>
-                        <excludeStat>com/huawei/cbc/cbccustomerrnverifyservice/common/exception/*</excludeStat>
-                        <excludeStat>com/huawei/cbc/cbccustomerrnverifyservice/common/listener/*</excludeStat>
-                        <excludeStat>org/apache/servicecomb/foundation/common/utils/*</excludeStat>
-                        <excludeStat>org/apache/servicecomb/config/inject/*</excludeStat>
-                    </excludeStats>
-                </configuration>
-                <executions>
-                    <!-- 必须添加instrument任务，否则无法采集到class的指令执行数据 -->
-                    <execution>
-                        <id>instrument</id>
-                        <goals>
-                            <goal>instrument</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
