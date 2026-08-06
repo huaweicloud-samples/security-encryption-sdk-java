@@ -50,7 +50,6 @@ public class KMSDiscoveryKeyring extends KMSKeyring {
             }
             kmsConfigList.add(currentKmsConfig);
         }
-        
         huaweiConfig.setKmsConfigList(kmsConfigList);
     }
 

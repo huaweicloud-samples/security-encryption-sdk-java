@@ -32,7 +32,7 @@ public class HuaweiConfig {
     private boolean isDiscovery;
 
     private List<KMSConfig> kmsConfigList;
-    
+
     private List<KMSConfig> originKmsConfigList;
 
     private CryptoAlgorithm cryptoAlgorithm;

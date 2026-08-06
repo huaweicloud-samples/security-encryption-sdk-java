@@ -4,29 +4,23 @@ import com.huaweicloud.encryptionsdk.HuaweiConfig;
 import com.huaweicloud.encryptionsdk.HuaweiCrypto;
 import com.huaweicloud.encryptionsdk.keyrings.KmsKeyringFactory;
 import com.huaweicloud.encryptionsdk.keyrings.kmskeyring.KMSKeyring;
-import com.huaweicloud.encryptionsdk.model.CryptoResult;
 import com.huaweicloud.encryptionsdk.model.KMSConfig;
 import com.huaweicloud.encryptionsdk.model.enums.CryptoAlgorithm;
 import com.huaweicloud.encryptionsdk.model.enums.KeyringTypeEnum;
-import com.huaweicloud.encryptionsdk.model.request.EncryptRequest;
 import com.huaweicloud.encryptionsdk.util.CommonUtils;
 import org.apache.commons.codec.DecoderException;
-import org.apache.commons.lang3.Validate;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
 /**
  * @description: 本示例演示使用 KMSDiscoveryKeyring 密钥环进行加密，然后解密。
  * </p>
  * 使用 KMSDiscoveryKeyring 密钥环进行解密无需再传递 keyId，regionId，projectId 等信息，仅需ak，sk即可。
  * </p>
  * 你需要提供访问华为云 KMS 的 ak、sk 作为环境变量，以及可使用的 KMS 对称主密钥所属的 projectId、region、keyId 和纯文本字符串作为参数。
- */
 
 /**
  * * @description: 本示例演示使用 KMSDiscoveryKeyring 密钥环进行加密文件，然后解密文件。
