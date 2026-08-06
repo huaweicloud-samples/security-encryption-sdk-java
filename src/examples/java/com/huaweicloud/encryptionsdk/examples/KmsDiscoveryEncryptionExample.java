@@ -2,25 +2,21 @@ package com.huaweicloud.encryptionsdk.examples;
 
 import com.huaweicloud.encryptionsdk.HuaweiConfig;
 import com.huaweicloud.encryptionsdk.HuaweiCrypto;
+import com.huaweicloud.encryptionsdk.KmsEncryptionExample;
 import com.huaweicloud.encryptionsdk.keyrings.KmsKeyringFactory;
-import com.huaweicloud.encryptionsdk.keyrings.kmskeyring.KMSKeyring;
 import com.huaweicloud.encryptionsdk.model.KMSConfig;
 import com.huaweicloud.encryptionsdk.model.enums.CryptoAlgorithm;
 import com.huaweicloud.encryptionsdk.model.enums.KeyringTypeEnum;
 import com.huaweicloud.encryptionsdk.util.CommonUtils;
-import org.apache.commons.codec.DecoderException;
+import org.apache.commons.lang3.Validate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-/**
- * @description: 本示例演示使用 KMSDiscoveryKeyring 密钥环进行加密，然后解密。
- * </p>
- * 使用 KMSDiscoveryKeyring 密钥环进行解密无需再传递 keyId，regionId，projectId 等信息，仅需ak，sk即可。
- * </p>
- * 你需要提供访问华为云 KMS 的 ak、sk 作为环境变量，以及可使用的 KMS 对称主密钥所属的 projectId、region、keyId 和纯文本字符串作为参数。
 
 /**
  * * @description: 本示例演示使用 KMSDiscoveryKeyring 密钥环进行加密文件，然后解密文件。
@@ -78,7 +74,7 @@ public class KmsDiscoveryEncryptionExample {
         // 8. 加密数据
         huaweiCrypto.encrypt(originFilePath, targetEncryptFilePath, map);
 
-        LOGGER.info("文件加密完成，源文件：{}, 加密后文件：{}", originFilePath, targetEncryptFilePath);
+        LOGGER.info("The file encryption is complete. Origin file: {}; Encrypted file: {}.", originFilePath, targetEncryptFilePath);
 
         // 9. 构建 KMS discovery 解密 SDK（无需再传递 keyId，regionId，projectId 等信息）
         HuaweiConfig huaweiConfigDiscovery = HuaweiConfig.builder().sk(sk).ak(ak).build();
@@ -88,7 +84,7 @@ public class KmsDiscoveryEncryptionExample {
         // 10. 解密数据
         huaweiCryptoDecrypt.decrypt(targetEncryptFilePath, targetDecryptFilePath);
 
-        LOGGER.info("文件解密完成，加密文件：{}, 解密后文件：{}", targetEncryptFilePath, targetDecryptFilePath);
+        LOGGER.info("The file decryption is complete. Encrypted file: {}; Decrypted file: {}.", targetEncryptFilePath, targetDecryptFilePath);
 
         // 11. 验证解密后的数据是否和原始纯文本字符串一致
         Validate.isTrue(compareFile(originFilePath, targetDecryptFilePath));
