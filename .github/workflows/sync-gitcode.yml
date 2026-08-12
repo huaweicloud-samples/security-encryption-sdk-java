@@ -17,5 +17,3 @@ jobs:
           source-repo: "https://gitcode.com/HuaweiCloudDeveloper/huaweicloud-encryption-sdk-java.git"
           # 目标就是当前GitHub仓库，无需修改
           destination-repo: ${{ github.repository_url }}
-          # 推送全部分支 + tag
-          mirror: true
