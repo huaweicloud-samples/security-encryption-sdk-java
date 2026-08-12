@@ -1,19 +1,27 @@
-name: Sync GitCode to GitHub
-
+name: Sync GitCode → GitHub
 on:
-  workflow_dispatch:  # 支持手动点击触发
+  workflow_dispatch:
   schedule:
-    # 每6小时执行一次，可按需修改；UTC时间
     - cron: '0 */6 * * *'
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # 关键：允许actions bot推送代码
     steps:
-      - name: Sync GitCode repository
-        uses: wearerequired/git-mirror-action@v1
-        with:
-          # ========== 修改这里为你的 GitCode 仓库地址 ==========
-          source-repo: "https://gitcode.com/HuaweiCloudDeveloper/huaweicloud-encryption-sdk-java.git"
-          # 目标就是当前GitHub仓库，无需修改
-          destination-repo: ${{ github.repository_url }}
+      - name: Mirror GitCode repo
+        env:
+          # GitCode源仓库，私有仓库替换为带token格式
+          SRC_REPO: https://gitcode.com/HuaweiCloudDeveloper/huaweicloud-encryption-sdk-java.git
+          # GitHub内置token拼接仓库地址，不要用github.repository_url
+          DST_REPO: https://${{ github.token }}@github.com/${{ github.repository }}.git
+        run: |
+          git config --global user.name "github‑actions[bot]"
+          git config --global user.email "github‑actions[bot]@users.noreply.github.com"
+          # 裸镜像克隆
+          git clone --mirror "${SRC_REPO}" temp_mirror
+          cd temp_mirror
+          git remote set-url origin "${DST_REPO}"
+          # 镜像推送全部分支、tag；会覆盖目标仓库，仅做镜像仓库使用
+          git push --mirror origin
