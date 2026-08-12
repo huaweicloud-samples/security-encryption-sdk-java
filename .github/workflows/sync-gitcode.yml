@@ -18,18 +18,21 @@ jobs:
         run: |
           git config --global user.name "github‑actions[bot]"
           git config --global user.email "github‑actions[bot]@users.noreply.github.com"
-          # 关闭交互式凭证询问，避免 No such device or address
           git config --global core.askpass ""
           git config --global http.lowSpeedLimit 1000
-          git config --global http.lowSpeedTime 60
+          git config --global http.lowSpeedTime 120
 
-          # 1. 裸克隆GitCode源
+          # credential helper：github 用户名随便填，密码填token
+          git config --global credential.helper '!f() {
+            case "$1" in
+              *github.com*)
+                echo "username=bot"
+                echo "password=${GH_TOKEN}"
+                ;;
+            esac
+          }; f'
+
           git clone --mirror "${SRC_REPO}" temp_mirror
           cd temp_mirror
-
-          # 2. 配置git credential，推送github时自动使用token，不拼接进url
-          git config --global credential.helper '!f() { echo "username=${GH_TOKEN}"; echo "password=x"; }; f'
           git remote set-url origin "https://github.com/${GH_REPO}.git"
-
-          # 镜像推送全部分支/tag
           git push --mirror origin
