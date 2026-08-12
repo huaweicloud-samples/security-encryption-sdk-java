@@ -1,0 +1,21 @@
+name: Sync GitCode to GitHub
+
+on:
+  workflow_dispatch:  # 支持手动点击触发
+  schedule:
+    # 每6小时执行一次，可按需修改；UTC时间
+    - cron: '0 */6 * * *'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync GitCode repository
+        uses: wearerequired/git-mirror-action@v1
+        with:
+          # ========== 修改这里为你的 GitCode 仓库地址 ==========
+          source-repo: "https://gitcode.com/HuaweiCloudDeveloper/huaweicloud-encryption-sdk-java.git"
+          # 目标就是当前GitHub仓库，无需修改
+          destination-repo: ${{ github.repository_url }}
+          # 推送全部分支 + tag
+          mirror: true
